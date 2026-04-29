@@ -1,0 +1,197 @@
+{
+  "description": "Layer 2: CRA requirement → framework control references and IAM-oriented guidance (original explanatory text, not standard wording).",
+  "requirements": [
+    {
+      "id": "2a",
+      "title": "Annex I, 2(a)  -  No known exploitable vulnerabilities",
+      "primary_iam": false,
+      "frameworks": {
+        "EN_303_645": { "references": ["5.2-1", "5.2-2", "5.2-3"], "how_it_helps": "Vulnerability disclosure policy, public contact, timely action on reports so IAM-related flaws are discoverable and remediable before shipping." },
+        "NIST_63B": { "references": ["§3.1.1", "§3.2"], "how_it_helps": "Minimum security properties for authenticator implementations; reduces implementation vulnerabilities in credential handling." },
+        "IEC_62443_4_2": { "references": ["CR 3.4"], "how_it_helps": "Integrity verification of software components; catches compromised or outdated IAM libraries before deployment." },
+        "ISO_27002": { "references": ["8.8", "8.28"], "how_it_helps": "8.8: systematic vulnerability scanning and remediation. 8.28: secure coding to prevent common authentication flaws." },
+        "CC": { "references": ["AVA_VAN", "ALC_FLR"], "how_it_helps": "Systematic vulnerability assessment and flaw remediation so known vulnerabilities are found and fixed." }
+      }
+    },
+    {
+      "id": "2b",
+      "title": "Annex I, 2(b)  -  Secure by default configuration",
+      "primary_iam": false,
+      "frameworks": {
+        "EN_303_645": { "references": ["5.1-1", "5.1-2", "5.1-3", "5.1-4", "5.1-5"], "how_it_helps": "No universal defaults; unique pre-installed passwords; crypto for auth; change mechanism; brute-force protection for CRA secure-by-default on IAM." },
+        "NIST_63B": { "references": ["§2.1", "§3.1.1", "§3.2.1"], "how_it_helps": "Credential strength, verifier behaviour, rate limiting; system-generated passwords random and minimum length." },
+        "IEC_62443_4_2": { "references": ["CR 1.1", "CR 1.5", "CR 1.7", "CR 2.5"], "how_it_helps": "User identification, authenticator management, password strength per SL, session lock." },
+        "ISO_27002": { "references": ["8.9", "5.17", "8.5"], "how_it_helps": "Secure baselines, authentication information lifecycle, secure authentication including default credential management." },
+        "CC": { "references": ["FIA_SOS.1", "FIA_UAU.7", "FMT_SMF.1"], "how_it_helps": "Secret quality, protected authentication feedback, manageable security functions for secure changeable defaults." }
+      }
+    },
+    {
+      "id": "2c",
+      "title": "Annex I, 2(c)  -  Security updates including automatic updates",
+      "primary_iam": false,
+      "frameworks": {
+        "EN_303_645": { "references": ["5.3-1", "5.3-3", "5.3-4", "5.3-9", "5.3-12"], "how_it_helps": "IAM patchability; authenticated integrity-checked updates; notification." },
+        "NIST_63B": { "references": ["§3.2"], "how_it_helps": "Authenticator lifecycle including revocation and renewal; supports patching auth implementations." },
+        "IEC_62443_4_2": { "references": ["CR 3.4", "EDR/HDR/NDR 3.10"], "how_it_helps": "Code integrity on updates; component-specific update support." },
+        "ISO_27002": { "references": ["8.8", "8.19", "8.32"], "how_it_helps": "Patching, controlled installation, change control for IAM patches." },
+        "CC": { "references": ["ALC_FLR", "FPT_TUD"], "how_it_helps": "Flaw remediation process; authentic integrity-verified updates." }
+      }
+    },
+    {
+      "id": "2d",
+      "title": "Annex I, 2(d)  -  Protection from unauthorised access",
+      "primary_iam": true,
+      "frameworks": {
+        "EN_303_645": { "references": ["5.1-1–5.1-5", "5.5-4", "5.6-1"], "how_it_helps": "Authentication mechanisms; no unauthenticated network access when initialised; minimise exposed surfaces." },
+        "NIST_63B": { "references": ["§2.1", "§3.1", "§3.2", "§4", "§5"], "how_it_helps": "AAL levels, authenticator types, lifecycle, session management for unauthorised access protection." },
+        "IEC_62443_4_2": { "references": ["CR 1.1–CR 1.14", "CR 2.1"], "how_it_helps": "Full FR1 identification/authentication family plus CR 2.1 authorization enforcement." },
+        "ISO_27002": { "references": ["5.15", "5.16", "5.17", "8.2", "8.3", "8.5"], "how_it_helps": "Access control policy, identity lifecycle, credentials, privileged access, restriction, secure authentication." },
+        "CC": { "references": ["FIA_UID", "FIA_UAU", "FIA_AFL", "FIA_SOS", "FIA_USB", "FDP_ACC", "FDP_ACF", "FMT_MSA"], "how_it_helps": "Identification, authentication, failures, secrets, subject binding, access policy and enforcement." }
+      }
+    },
+    {
+      "id": "2e",
+      "title": "Annex I, 2(e)  -  Confidentiality protection (encryption)",
+      "primary_iam": false,
+      "frameworks": {
+        "EN_303_645": { "references": ["5.4-1", "5.4-2", "5.4-3", "5.4-4", "5.5-1"], "how_it_helps": "Credential storage; no hardcoded secrets; encrypt credentials in transit; crypto for communication." },
+        "NIST_63B": { "references": ["§3.1.1", "§3.2", "§4"], "how_it_helps": "Password hashing (e.g. memory-hard), authenticator output protection, binding over protected channel." },
+        "IEC_62443_4_2": { "references": ["CR 4.1", "CR 4.3", "CR 1.8", "CR 1.9"], "how_it_helps": "Confidentiality, cryptography use, PKI and public-key authentication strength." },
+        "ISO_27002": { "references": ["8.24", "5.17", "8.7"], "how_it_helps": "Cryptographic policy and key management; protection of authentication information." },
+        "CC": { "references": ["FCS_COP", "FCS_CKM", "FDP_ITC", "FTP_ITC"], "how_it_helps": "Crypto operations and key management; trusted channel for authentication data." }
+      }
+    },
+    {
+      "id": "2f",
+      "title": "Annex I, 2(f)  -  Integrity protection",
+      "primary_iam": false,
+      "frameworks": {
+        "EN_303_645": { "references": ["5.7-1", "5.7-2", "5.13-1"], "how_it_helps": "Software integrity for IAM component; input validation on auth flows." },
+        "NIST_63B": { "references": ["§3.2.5", "§5"], "how_it_helps": "Verifier impersonation resistance at AAL3; session binding integrity." },
+        "IEC_62443_4_2": { "references": ["CR 3.1", "CR 3.4", "CR 3.9"], "how_it_helps": "Communication integrity, software integrity, audit information protection." },
+        "ISO_27002": { "references": ["8.7", "8.19", "8.24"], "how_it_helps": "Malware protection, controlled software changes, integrity via MACs/signatures." },
+        "CC": { "references": ["FDP_SDI", "FDP_UIT", "FPT_TST"], "how_it_helps": "Stored data integrity, inter-TSF integrity transfer, TSF self-test." }
+      }
+    },
+    {
+      "id": "2g",
+      "title": "Annex I, 2(g)  -  Data minimisation",
+      "primary_iam": false,
+      "frameworks": {
+        "EN_303_645": { "references": ["5.8-1", "6.1", "6.2"], "how_it_helps": "Limit identity data exposure; consent and purpose limitation." },
+        "NIST_63B": { "references": ["§3.2.7"], "how_it_helps": "Attribute minimisation during authentication." },
+        "IEC_62443_4_2": { "references": ["CR 5.1"], "how_it_helps": "Network segmentation restricting IAM data flows." },
+        "ISO_27002": { "references": ["5.33", "5.34"], "how_it_helps": "Records and PII protection; minimum identity attributes." },
+        "CC": { "references": ["FPR_ANO", "FPR_PSE", "FPR_UNL"], "how_it_helps": "Anonymity, pseudonymity, unlinkability for privacy-preserving auth." }
+      }
+    },
+    {
+      "id": "2h",
+      "title": "Annex I, 2(h)  -  Availability and DoS resilience",
+      "primary_iam": false,
+      "frameworks": {
+        "EN_303_645": { "references": ["5.9-1", "5.9-2", "5.9-3"], "how_it_helps": "Resilience during cloud IAM outages; local functionality; orderly recovery." },
+        "NIST_63B": { "references": ["§3.2.1", "§5"], "how_it_helps": "Rate limiting vs brute-force DoS; session timeout and reauthentication." },
+        "IEC_62443_4_2": { "references": ["CR 7.1", "CR 7.2", "CR 7.3", "CR 7.4"], "how_it_helps": "DoS protection, resource management, backup and recovery of IAM config/credentials." },
+        "ISO_27002": { "references": ["8.6", "5.29", "5.30"], "how_it_helps": "Capacity for auth services; ICT continuity for IAM availability." },
+        "CC": { "references": ["FRU_FLT", "FRU_PRS", "FRU_RSA"], "how_it_helps": "Fault tolerance, priority of service, resource allocation for IAM." }
+      }
+    },
+    {
+      "id": "2i",
+      "title": "Annex I, 2(i)  -  Minimise negative impact on other devices",
+      "primary_iam": false,
+      "frameworks": {
+        "EN_303_645": { "references": ["5.1-1", "5.6-1"], "how_it_helps": "Unique credentials prevent fleet-wide compromise; reduced attack surface." },
+        "NIST_63B": { "references": ["§4"], "how_it_helps": "Per-subscriber/device authenticator binding." },
+        "IEC_62443_4_2": { "references": ["CR 5.1", "CR 1.2"], "how_it_helps": "Segmentation; unique device identity." },
+        "ISO_27002": { "references": ["8.22", "5.15"], "how_it_helps": "Network segmentation; least privilege." },
+        "CC": { "references": ["FDP_RIP", "FPT_SEP"], "how_it_helps": "Residual information protection; TSF domain separation." }
+      }
+    },
+    {
+      "id": "2j",
+      "title": "Annex I, 2(j)  -  Limit attack surfaces",
+      "primary_iam": false,
+      "frameworks": {
+        "EN_303_645": { "references": ["5.6-1", "5.6-2", "5.6-3"], "how_it_helps": "Disable unused interfaces; minimise unauthenticated access; hardware exposure." },
+        "NIST_63B": { "references": ["§2.1"], "how_it_helps": "Approved authenticator types only." },
+        "IEC_62443_4_2": { "references": ["CR 2.4", "CR 7.2", "EDR/HDR/NDR 2.13"], "how_it_helps": "Mobile code, resources, physical I/O control." },
+        "ISO_27002": { "references": ["8.9", "8.20", "8.23"], "how_it_helps": "Hardening, network security, web filtering." },
+        "CC": { "references": ["FPT_FLS", "FMT_SMF"], "how_it_helps": "Fail secure; explicit management functions (no hidden IAM interfaces)." }
+      }
+    },
+    {
+      "id": "2k",
+      "title": "Annex I, 2(k)  -  Exploitation mitigation",
+      "primary_iam": false,
+      "frameworks": {
+        "EN_303_645": { "references": ["5.13-1"], "how_it_helps": "Input validation on authentication inputs." },
+        "NIST_63B": { "references": ["§3.2.1", "§3.2.5", "§3.2.2"], "how_it_helps": "Rate limiting, impersonation resistance, replay resistance." },
+        "IEC_62443_4_2": { "references": ["CR 3.5", "CR 1.11", "CR 3.1"], "how_it_helps": "Input validation, failed login handling, communication integrity." },
+        "ISO_27002": { "references": ["8.28", "8.26"], "how_it_helps": "Secure coding and application security for IAM." },
+        "CC": { "references": ["FIA_AFL", "FPT_RCV", "AVA_VAN"], "how_it_helps": "Auth failures, trusted recovery, vulnerability analysis." }
+      }
+    },
+    {
+      "id": "2l",
+      "title": "Annex I, 2(l)  -  Security-related logging and monitoring",
+      "primary_iam": false,
+      "frameworks": {
+        "EN_303_645": { "references": ["5.10-1", "5.11-1"], "how_it_helps": "Security telemetry including auth anomalies; user data in logs / opt-out." },
+        "NIST_63B": { "references": ["§3.2.1", "§5"], "how_it_helps": "Failed auth logging; session activity logging." },
+        "IEC_62443_4_2": { "references": ["CR 2.8", "CR 2.9", "CR 2.10", "CR 2.11", "CR 6.1", "CR 6.2"], "how_it_helps": "Auditable events, storage, failures, timestamps, accessibility, monitoring." },
+        "ISO_27002": { "references": ["8.15", "8.16", "8.17"], "how_it_helps": "Logging policy, monitoring, clock sync (esp. Architecture B)." },
+        "CC": { "references": ["FAU_GEN", "FAU_SAR", "FAU_STG", "FAU_SEL"], "how_it_helps": "Audit generation, review, storage, selection (supports opt-out)." }
+      }
+    },
+    {
+      "id": "2m",
+      "title": "Annex I, 2(m)  -  Secure data removal and transfer",
+      "primary_iam": false,
+      "frameworks": {
+        "EN_303_645": { "references": ["5.11-1", "5.11-2", "5.11-3", "5.11-4"], "how_it_helps": "Deletion of personal data including from associated cloud IAM services." },
+        "NIST_63B": { "references": ["§4.2", "§4.3"], "how_it_helps": "Revocation; loss/theft/unauthorised use handling." },
+        "IEC_62443_4_2": { "references": ["CR 4.2"], "how_it_helps": "Media sanitisation including credentials." },
+        "ISO_27002": { "references": ["7.14", "8.10", "8.12"], "how_it_helps": "Disposal, information deletion, leakage prevention." },
+        "CC": { "references": ["FDP_RIP"], "how_it_helps": "No residual credential data after deletion." }
+      }
+    },
+    {
+      "id": "part2_vuln",
+      "title": "Annex I, Part II  -  Vulnerability handling (incl. SBOM / dependencies)",
+      "primary_iam": false,
+      "frameworks": {
+        "EN_303_645": { "references": ["5.2-1", "5.2-2", "5.2-3", "5.3-1–5.3-12"], "how_it_helps": "CVD policy, contact, timely action, full update mechanism (TS 103 701). 5.2-1 supports component awareness for disclosure." },
+        "NIST_63B": { "references": ["§3.2"], "how_it_helps": "Authenticator lifecycle supports remediation in auth mechanism. SBOM/composition not primary focus of 63B." },
+        "IEC_62443_4_2": { "references": ["IEC 62443-4-1 DM-1–DM-5", "SUM-1–SUM-5", "SM-9", "SM-10"], "how_it_helps": "Defect and security update management (4-1); SM-9/SM-10 third-party component management for IAM dependencies." },
+        "ISO_27002": { "references": ["8.8", "6.8", "5.5", "5.6", "5.9", "5.21"], "how_it_helps": "Vulnerability management, reporting, contacts; 5.9/5.21 inventory and supply chain for IAM libraries." },
+        "CC": { "references": ["ALC_FLR", "AVA_VAN", "ALC_TAT", "ALC_LCD"], "how_it_helps": "Flaw remediation and vulnerability analysis; ALC_TAT/LCD for dependency and lifecycle tracking." }
+      }
+    },
+    {
+      "id": "art14",
+      "title": "Article 14  -  Reporting obligations",
+      "primary_iam": false,
+      "frameworks": {
+        "EN_303_645": { "references": ["5.2-1", "5.2-2"], "how_it_helps": "Disclosure infrastructure for reports that may trigger Art. 14." },
+        "NIST_63B": { "references": [], "how_it_helps": "Not directly addressed; reporting is regulatory not authentication technical." },
+        "IEC_62443_4_2": { "references": ["IEC 62443-4-1 DM-3", "DM-5"], "how_it_helps": "Issue tracking and closure notification for reporting timelines." },
+        "ISO_27002": { "references": ["5.5", "5.24", "5.26"], "how_it_helps": "Authority contacts; incident management planning and response." },
+        "CC": { "references": ["ALC_FLR"], "how_it_helps": "Notification procedures for affected users (Art. 14(8) support)." }
+      }
+    },
+    {
+      "id": "annex2_user_info",
+      "title": "Annex II  -  User information",
+      "primary_iam": false,
+      "frameworks": {
+        "EN_303_645": { "references": [], "how_it_helps": "Map Annex II obligations to product instructions; EN 303 645 supports baseline consumer IoT documentation expectations where relevant." },
+        "NIST_63B": { "references": [], "how_it_helps": "Use for authenticator and session behaviour described to users where applicable." },
+        "IEC_62443_4_2": { "references": [], "how_it_helps": "SR 1.x and 2.x inform what must be documented for operators." },
+        "ISO_27002": { "references": ["5.15", "8.5"], "how_it_helps": "Documentation of access and authentication policies for users." },
+        "CC": { "references": ["AGD_OPE", "AGD_PRE"], "how_it_helps": "Operational and preparative user guidance (CC documentation families)." }
+      }
+    }
+  ]
+}

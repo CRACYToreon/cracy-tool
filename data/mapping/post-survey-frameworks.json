@@ -1,0 +1,20 @@
+{
+  "description": "Shown only when the determination survey reaches the END message (full completion). User selects which frameworks to include in the assembled Layer 2 output.",
+  "question_id": "FRAMEWORKS",
+  "type": "multi",
+  "text": "Which security frameworks should we map your answers to?",
+  "option_keys": [
+    "EN_303_645",
+    "NIST_63B",
+    "IEC_62443_4_2",
+    "ISO_27002",
+    "CC"
+  ],
+  "labels": {
+    "EN_303_645": "ETSI EN 303 645",
+    "NIST_63B": "NIST SP 800-63B",
+    "IEC_62443_4_2": "IEC 62443-4-2",
+    "ISO_27002": "ISO/IEC 27002",
+    "CC": "Common Criteria / ISO/IEC 15408"
+  }
+}

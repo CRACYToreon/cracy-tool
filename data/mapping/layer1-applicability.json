@@ -1,0 +1,22 @@
+{
+  "description": "Which CRA requirements apply per Layer 1 profile. Source: assembly guide Step 1 matrix. B_HYBRID aligned with B_FULL for requirement applicability; refine in tooling if needed.",
+  "profiles": ["A", "B_FULL", "B_3P", "B_HYBRID", "A_B", "D", "C_CRIT", "C_JUST", "C_IMPL"],
+  "requirements": [
+    { "id": "2a", "title": "Annex I, 2(a)  -  No known exploitable vulnerabilities", "applicability": { "A": "full", "B_FULL": "full", "B_3P": "full", "B_HYBRID": "full", "A_B": "full", "D": "full", "C_CRIT": "full", "C_JUST": "full", "C_IMPL": "full" } },
+    { "id": "2b", "title": "Annex I, 2(b)  -  Secure by default configuration", "applicability": { "A": "full", "B_FULL": "full", "B_3P": "full", "B_HYBRID": "full", "A_B": "full", "D": "full", "C_CRIT": "violation", "C_JUST": "none", "C_IMPL": "violation" } },
+    { "id": "2c", "title": "Annex I, 2(c)  -  Security updates including automatic updates", "applicability": { "A": "full", "B_FULL": "full", "B_3P": "full", "B_HYBRID": "full", "A_B": "full", "D": "full", "C_CRIT": "full", "C_JUST": "full", "C_IMPL": "full" } },
+    { "id": "2d", "title": "Annex I, 2(d)  -  Protection from unauthorised access (primary IAM)", "applicability": { "A": "full", "B_FULL": "full", "B_3P": "full", "B_HYBRID": "full", "A_B": "full", "D": "full", "C_CRIT": "violation", "C_JUST": "partial", "C_IMPL": "violation" }, "partial_notes": { "C_JUST": "justified absence of access control per Art. 13(4)" } },
+    { "id": "2e", "title": "Annex I, 2(e)  -  Confidentiality protection (encryption)", "applicability": { "A": "full", "B_FULL": "full", "B_3P": "full", "B_HYBRID": "full", "A_B": "full", "D": "full", "C_CRIT": "violation", "C_JUST": "partial", "C_IMPL": "full" } },
+    { "id": "2f", "title": "Annex I, 2(f)  -  Integrity protection", "applicability": { "A": "full", "B_FULL": "full", "B_3P": "full", "B_HYBRID": "full", "A_B": "full", "D": "full", "C_CRIT": "full", "C_JUST": "full", "C_IMPL": "full" } },
+    { "id": "2g", "title": "Annex I, 2(g)  -  Data minimisation", "applicability": { "A": "full", "B_FULL": "full", "B_3P": "full", "B_HYBRID": "full", "A_B": "full", "D": "partial", "C_CRIT": "none", "C_JUST": "none", "C_IMPL": "full" } },
+    { "id": "2h", "title": "Annex I, 2(h)  -  Availability and DoS resilience", "applicability": { "A": "full", "B_FULL": "full", "B_3P": "full", "B_HYBRID": "full", "A_B": "full", "D": "full", "C_CRIT": "none", "C_JUST": "none", "C_IMPL": "full" } },
+    { "id": "2i", "title": "Annex I, 2(i)  -  Minimise negative impact on other devices", "applicability": { "A": "full", "B_FULL": "full", "B_3P": "full", "B_HYBRID": "full", "A_B": "full", "D": "full", "C_CRIT": "violation", "C_JUST": "partial", "C_IMPL": "full" } },
+    { "id": "2j", "title": "Annex I, 2(j)  -  Limit attack surfaces", "applicability": { "A": "full", "B_FULL": "full", "B_3P": "full", "B_HYBRID": "full", "A_B": "full", "D": "full", "C_CRIT": "full", "C_JUST": "full", "C_IMPL": "full" } },
+    { "id": "2k", "title": "Annex I, 2(k)  -  Exploitation mitigation", "applicability": { "A": "full", "B_FULL": "full", "B_3P": "full", "B_HYBRID": "full", "A_B": "full", "D": "full", "C_CRIT": "full", "C_JUST": "full", "C_IMPL": "full" } },
+    { "id": "2l", "title": "Annex I, 2(l)  -  Security-related logging and monitoring", "applicability": { "A": "full", "B_FULL": "full", "B_3P": "full", "B_HYBRID": "full", "A_B": "full", "D": "full", "C_CRIT": "partial", "C_JUST": "partial", "C_IMPL": "full" } },
+    { "id": "2m", "title": "Annex I, 2(m)  -  Secure data removal and transfer", "applicability": { "A": "full", "B_FULL": "full", "B_3P": "full", "B_HYBRID": "full", "A_B": "full", "D": "partial", "C_CRIT": "none", "C_JUST": "none", "C_IMPL": "full" } },
+    { "id": "part2_vuln", "title": "Annex I, Part II  -  Vulnerability handling process", "applicability": { "A": "full", "B_FULL": "full", "B_3P": "full", "B_HYBRID": "full", "A_B": "full", "D": "full", "C_CRIT": "full", "C_JUST": "full", "C_IMPL": "full" } },
+    { "id": "art14", "title": "Article 14  -  Reporting obligations", "applicability": { "A": "full", "B_FULL": "full", "B_3P": "full", "B_HYBRID": "full", "A_B": "full", "D": "full", "C_CRIT": "full", "C_JUST": "full", "C_IMPL": "full" } },
+    { "id": "annex2_user_info", "title": "Annex II  -  User information", "applicability": { "A": "full", "B_FULL": "full", "B_3P": "full", "B_HYBRID": "full", "A_B": "full", "D": "full", "C_CRIT": "full", "C_JUST": "full", "C_IMPL": "full" } }
+  ]
+}

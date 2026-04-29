@@ -1,0 +1,168 @@
+/* Reusable UI pieces – use with survey theme or override --ui-* in your page */
+
+:root {
+  --ui-bg: var(--survey-bg, #0f1419);
+  --ui-surface: var(--survey-surface, #1a2332);
+  --ui-text: var(--survey-text, #e6edf3);
+  --ui-muted: var(--survey-muted, #8b949e);
+  --ui-accent: var(--survey-accent, #58a6ff);
+  --ui-border: var(--survey-border, #30363d);
+  --ui-radius: var(--survey-radius, 8px);
+  --ui-success: #3fb950;
+  --ui-warning: #d29922;
+  --ui-danger: #f85149;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.4;
+  border-radius: var(--ui-radius);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--ui-accent);
+  outline-offset: 2px;
+}
+
+.btn--primary {
+  background: var(--ui-accent);
+  color: var(--ui-bg);
+  border-color: var(--ui-accent);
+}
+
+.btn--primary:hover {
+  filter: brightness(1.1);
+}
+
+.btn--secondary {
+  background: var(--ui-surface);
+  color: var(--ui-text);
+  border-color: var(--ui-border);
+}
+
+.btn--secondary:hover {
+  background: var(--ui-border);
+}
+
+.btn--ghost {
+  background: transparent;
+  color: var(--ui-muted);
+}
+
+.btn--ghost:hover {
+  color: var(--ui-text);
+  background: var(--ui-surface);
+}
+
+.btn--danger {
+  background: transparent;
+  color: var(--ui-danger);
+  border-color: var(--ui-danger);
+}
+
+.btn--danger:hover {
+  background: rgba(248, 81, 73, 0.15);
+}
+
+/* Card – generic container */
+.card {
+  background: var(--ui-surface);
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-radius);
+  padding: 1.25rem 1.5rem;
+}
+
+.card__title {
+  margin: 0 0 0.5rem 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.card__body {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--ui-muted);
+}
+
+/* Progress bar */
+.progress {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.progress__label {
+  font-size: 0.8rem;
+  color: var(--ui-muted);
+}
+
+.progress__bar {
+  height: 6px;
+  background: var(--ui-border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progress__fill {
+  height: 100%;
+  background: var(--ui-accent);
+  border-radius: 999px;
+  transition: width 0.25s ease;
+}
+
+/* Badge / chip */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border-radius: 4px;
+  background: var(--ui-border);
+  color: var(--ui-muted);
+}
+
+.badge--accent {
+  background: rgba(88, 166, 255, 0.2);
+  color: var(--ui-accent);
+}
+
+.badge--success {
+  background: rgba(63, 185, 80, 0.2);
+  color: var(--ui-success);
+}
+
+.badge--warning {
+  background: rgba(210, 153, 34, 0.2);
+  color: var(--ui-warning);
+}
+
+/* Stack / layout helpers */
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.stack--sm { gap: 0.5rem; }
+.stack--lg { gap: 1.25rem; }
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.row--end { justify-content: flex-end; }
+.row--between { justify-content: space-between; }

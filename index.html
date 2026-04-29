@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CRA survey</title>
+  <link rel="stylesheet" href="css/survey.css" />
+  <link rel="stylesheet" href="css/ui.css" />
+</head>
+<body>
+  <header class="survey-header">
+    <div class="row row--between">
+      <div>
+        <h1>CRA questionnaire</h1>
+        <p class="survey-subtitle">PDE assessment</p>
+      </div>
+    </div>
+    <div id="survey-progress" class="progress" aria-hidden="true"></div>
+  </header>
+  <main class="survey-main">
+    <div id="survey-container" class="survey-container"></div>
+    <aside id="survey-summary" class="survey-summary card stack" aria-live="polite">
+      <div class="card__title row row--between">
+        <span>Answers</span>
+        <div class="row stack--sm">
+          <button type="button" id="btn-copy" class="btn btn--secondary" title="Copy JSON">Copy</button>
+          <button type="button" id="btn-reset" class="btn btn--ghost" title="Start over">Reset</button>
+        </div>
+      </div>
+      <div id="survey-summary-body" class="card__body"></div>
+    </aside>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/json-logic-js@2.0.0/dist/jsonLogic.min.js"></script>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

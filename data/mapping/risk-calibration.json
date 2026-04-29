@@ -1,0 +1,23 @@
+{
+  "description": "Step 3: calibrate control rigour by risk level (from Survey Q6).",
+  "levels": {
+    "STANDARD": {
+      "IEC_62443_4_2_target_sl": "SL-1 to SL-2",
+      "NIST_63B_target_aal": "AAL1",
+      "CC_EAL_indicative": "EAL2-EAL3",
+      "ISO_27002_depth": "Base controls"
+    },
+    "ELEVATED": {
+      "IEC_62443_4_2_target_sl": "SL-2 to SL-3",
+      "NIST_63B_target_aal": "AAL2",
+      "CC_EAL_indicative": "EAL3-EAL4",
+      "ISO_27002_depth": "Base + enhanced"
+    },
+    "HIGH": {
+      "IEC_62443_4_2_target_sl": "SL-3 to SL-4",
+      "NIST_63B_target_aal": "AAL2-AAL3",
+      "CC_EAL_indicative": "EAL4+",
+      "ISO_27002_depth": "Full + supplementary"
+    }
+  }
+}

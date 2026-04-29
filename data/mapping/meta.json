@@ -1,0 +1,42 @@
+{
+  "version": "1.0",
+  "description": "CRA IAM mapping: Layer 1 (survey profile → applicable CRA requirements) and Layer 2 (CRA requirement → framework controls). Companion to docs/survey-source.md and the determination survey.",
+  "framework_keys": {
+    "EN_303_645": {
+      "label": "ETSI EN 303 645",
+      "version": "V2.1.1 (2020-06)",
+      "column_label": "EN 303 645"
+    },
+    "NIST_63B": {
+      "label": "NIST SP 800-63B",
+      "version": "Revision 4 (July 2025)",
+      "column_label": "NIST 63B"
+    },
+    "IEC_62443_4_2": {
+      "label": "IEC 62443-4-2",
+      "version": "Edition 1.0 (2019-02)",
+      "column_label": "62443-4-2"
+    },
+    "ISO_27002": {
+      "label": "ISO/IEC 27002",
+      "version": "2022",
+      "column_label": "27002"
+    },
+    "CC": {
+      "label": "ISO/IEC 15408 (Common Criteria)",
+      "version": "CC v3.1 R5 / ISO 2022",
+      "column_label": "CC"
+    }
+  },
+  "applicability_values": {
+    "full": "Fully applies (✓)",
+    "partial": "Partially applies or conditional (○)",
+    "none": "Not applicable",
+    "violation": "Requirement violated / in breach for this profile (VIOLATION)"
+  },
+  "notes": [
+    "B_HYBRID: manufacturer layer treated as B-FULL scope for applicability; underlying IdP as B-3P (assembly may union controls).",
+    "A_B: hybrid local + remote IAM; applicability row is merged from A and B_FULL (union for compliance scope).",
+    "Paid standards: only references and original explanatory text; no reproduced standard wording."
+  ]
+}

@@ -1,0 +1,86 @@
+{
+  "architecture_codes": {
+    "A": {
+      "name": "Local IAM",
+      "definition": "Identification, authentication and access decisions entirely on-device; credentials stored locally; local enforcement.",
+      "original_doc": "Architecture A: Local IAM"
+    },
+    "B": {
+      "name": "Cloud-backend IAM",
+      "definition": "PEP on PDE, PDP in remote cloud; subdivided by CRA scope (B-FULL, B-3P, B-HYBRID).",
+      "original_doc": "Architecture B: Cloud-backend IAM"
+    },
+    "A_B": {
+      "name": "Hybrid IAM",
+      "definition": "Both local and remote IAM (e.g. local fallback + cloud primary); both control sets apply.",
+      "original_doc": "Many PDEs combine A and B (D2.3)"
+    },
+    "C": {
+      "name": "No / inadequate IAM",
+      "definition": "No authentication, hardcoded credentials, or nominal access control; subdivided C-CRIT, C-JUST, C-IMPL.",
+      "original_doc": "Architecture C"
+    },
+    "D": {
+      "name": "Integration IAM",
+      "definition": "Integrates into customer IAM (LDAP, AD, RADIUS, SAML/OIDC); manufacturer provides integration, does not operate IAM.",
+      "original_doc": "Extension vs original deliverable"
+    }
+  },
+  "b_subtypes": {
+    "B_FULL": {
+      "name": "Full CRA Scope",
+      "survey": "Q5 = manufacturer's own cloud / commissioned development",
+      "definition": "Remote IAM qualifies as remote data processing solution under CRA Art. 3(2); full Annex I on device and cloud IAM."
+    },
+    "B_3P": {
+      "name": "Third-Party (due diligence)",
+      "survey": "Q5 = third-party IdP (Auth0, Cognito, etc.)",
+      "definition": "Third-party IAM outside CRA remote data processing scope; Art. 13(5) due diligence; PDE still meets essential requirements."
+    },
+    "B_HYBRID": {
+      "name": "Hybrid Scope",
+      "survey": "Q5 = partial / orchestration on third-party IdP",
+      "definition": "Manufacturer layer: B-FULL; underlying IdP: B-3P; both apply simultaneously."
+    }
+  },
+  "c_subtypes": {
+    "C_CRIT": {
+      "name": "Critical Non-Compliance",
+      "survey": "Q3a = yes (hardcoded/shared default credentials)",
+      "definition": "Worst case; multiple violations 2(b), 2(d), 2(e), 2(i); immediate remediation."
+    },
+    "C_JUST": {
+      "name": "Justified Absence",
+      "survey": "Q3b path with documented risk justification",
+      "definition": "No auth with Art. 13(4)-style justification; rare; verify vs Recital 9."
+    },
+    "C_IMPL": {
+      "name": "Implementation Required",
+      "survey": "Q3b = no justification",
+      "definition": "Must implement authentication or produce justification; practical outcome for connected PDE: implement auth."
+    }
+  },
+  "risk_levels": {
+    "STANDARD": {
+      "from_survey": "Q6 highest category: configuration/management only",
+      "iec_62443_hint": "SL-1 to SL-2",
+      "nist_63b_hint": "AAL1",
+      "cc_hint": "EAL2-EAL3",
+      "iso_27002_hint": "Base controls"
+    },
+    "ELEVATED": {
+      "from_survey": "Q6 includes user/personal data",
+      "iec_62443_hint": "SL-2 to SL-3",
+      "nist_63b_hint": "AAL2",
+      "cc_hint": "EAL3-EAL4",
+      "iso_27002_hint": "Base + enhanced"
+    },
+    "HIGH": {
+      "from_survey": "Q6 includes physical safety and/or connected systems",
+      "iec_62443_hint": "SL-3 to SL-4",
+      "nist_63b_hint": "AAL2-AAL3",
+      "cc_hint": "EAL4+",
+      "iso_27002_hint": "Full + supplementary"
+    }
+  }
+}
