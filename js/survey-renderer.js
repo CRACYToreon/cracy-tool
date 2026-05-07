@@ -149,7 +149,7 @@ export function render(container, engine, callbacks = {}) {
         }
         const footer = document.createElement("p");
         footer.className = "survey-end-footer";
-        footer.innerHTML = "Export JSON from the summary panel (includes answers and selected frameworks). See <strong>docs/survey-source.md</strong> for full question development.";
+        //footer.innerHTML = "Export JSON from the summary panel (includes answers and selected frameworks). See <strong>docs/survey-source.md</strong> for full question development.";
         el.appendChild(footer);
       } else {
         el.appendChild(label);
