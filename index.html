@@ -8,26 +8,86 @@
   <link rel="stylesheet" href="css/ui.css" />
 </head>
 <body>
+  <div id="survey-welcome-overlay" class="survey-welcome-overlay" hidden>
+    <div
+      class="survey-welcome-dialog"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="survey-welcome-title"
+    >
+      <h2 id="survey-welcome-title" class="survey-welcome-dialog__title">About this questionnaire</h2>
+      <div class="survey-welcome-dialog__body">
+        <p><strong>Purpose.</strong> This tool helps you assess IAM-related choices for a product under the CRA. It walks through questions about how your product authenticates and authorises users, admins, devices, or cloud services, and maps your answers to applicable CRA Annex I requirements and <strong>illustrative</strong> optional reference frameworks (ETSI EN 303 645, NIST SP 800-63B, IEC 62443-4-2, ISO/IEC 27002, ISO/IEC 15408 Common Criteria).</p>
+        <p><strong>What you get.</strong> A report with your answers, risk profile, and CRA requirements mapped to the framework columns you selected. The output structure is explained on the completion screen.</p>
+        <p><strong>Framework mapping.</strong> The links from CRA rows to NIST SP 800-63B, Common Criteria, and other standards are <strong>project-authored cross-mappings</strong> built into this application. They are intended for discussion and gap analysis only, and are <strong>not</strong> official ENISA publications, EU legal texts, or endorsed crosswalks from any standards body. Do not rely on them as authoritative in a formal conformity assessment.</p>
+      </div>
+      <div class="survey-welcome-dialog__actions">
+        <button type="button" class="btn btn--primary" id="survey-welcome-dismiss">Continue to survey</button>
+      </div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      var el = document.getElementById("survey-welcome-overlay");
+      if (!el) return;
+      try {
+        if (!localStorage.getItem("cracy_welcome_seen_v1")) {
+          el.removeAttribute("hidden");
+          document.body.classList.add("survey-welcome-open");
+        }
+      } catch (e) {
+        el.removeAttribute("hidden");
+        document.body.classList.add("survey-welcome-open");
+      }
+    })();
+  </script>
   <header class="survey-header">
-    <div class="row row--between">
+    <div class="row row--between row--align-start">
       <div>
         <h1>CRA questionnaire</h1>
         <p class="survey-subtitle">PDE assessment</p>
       </div>
+      <button type="button" class="btn btn--ghost survey-welcome-about" id="survey-welcome-about" aria-haspopup="dialog" aria-controls="survey-welcome-overlay">
+        About this questionnaire
+      </button>
     </div>
     <div id="survey-progress" class="progress" aria-hidden="true"></div>
   </header>
   <main class="survey-main">
-    <div id="survey-container" class="survey-container"></div>
-    <aside id="survey-summary" class="survey-summary card stack" aria-live="polite">
-      <div class="card__title row row--between">
-        <span>Answers</span>
-        <div class="row stack--sm">
-          <button type="button" id="btn-copy" class="btn btn--secondary" title="Copy JSON">Copy</button>
-          <button type="button" id="btn-reset" class="btn btn--ghost" title="Start over">Reset</button>
+    <div class="survey-main-col">
+      <div id="survey-container" class="survey-container"></div>
+      <div class="survey-nav-actions" role="toolbar" aria-label="Survey navigation">
+        <div class="survey-nav-segmented">
+          <button type="button" id="btn-previous" class="survey-nav-btn survey-nav-btn--prev" title="Go to the previous question" disabled>
+            <span class="survey-nav-btn__icon" aria-hidden="true">←</span>
+            <span class="survey-nav-btn__text">Previous</span>
+          </button>
+          <button type="button" id="btn-reset" class="survey-nav-btn survey-nav-btn--reset" title="Clear all answers and start again from the beginning">
+            <span class="survey-nav-btn__text">Start over</span>
+          </button>
         </div>
       </div>
-      <div id="survey-summary-body" class="card__body"></div>
+    </div>
+    <aside id="survey-summary" class="survey-summary" aria-live="polite">
+      <div class="survey-summary__header">
+        <h2 class="survey-summary__title">Answers</h2>
+      </div>
+      <div class="survey-export-panel">
+        <p id="survey-export-hint" class="survey-export-panel__hint">
+          When you finish the questionnaire and choose generate report, you can copy answers as JSON or save as a PDF.
+        </p>
+        <div id="survey-export-actions" class="survey-export-panel__actions" hidden>
+          <button type="button" id="btn-print-report" class="survey-export-btn survey-export-btn--print" title="Opens a print-ready tab, then your browser’s print dialog (Save as PDF where available).">
+            <span class="survey-export-btn__title">Print or save as PDF</span>
+            <span class="survey-export-btn__meta">Opens a new tab for printing</span>
+          </button>
+          <button type="button" id="btn-copy" class="survey-export-btn survey-export-btn--json" title="Copy answers with question text and metadata as JSON">
+            <span class="survey-export-btn__title">Copy answers (JSON)</span>
+            <span class="survey-export-btn__meta">Readable for third parties</span>
+          </button>
+        </div>
+      </div>
+      <div id="survey-summary-body" class="survey-summary__body"></div>
     </aside>
   </main>
   <script src="https://cdn.jsdelivr.net/npm/json-logic-js@2.0.0/dist/jsonLogic.min.js"></script>

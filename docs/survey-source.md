@@ -1,5 +1,11 @@
 # Survey source: CRA questionnaire (original build)
 
+## Mapping provenance
+
+Clause-level links from CRA Annex I rows to NIST SP 800-63B, ISO/IEC 15408 (Common Criteria), ETSI EN 303 645, IEC 62443-4-2, and ISO/IEC 27002 are stored in `data/mapping/layer2-requirements.json` and related files. They are **project-authored cross-mappings** for workshops and gap discussion. They are **not** official ENISA crosswalk tables, EU legal interpretation, or publications from NIST, ISO, or ETSI that endorse this matrix.
+
+---
+
 ## Related Essential Requirements
 
 - **Part I (b)** — secure by default configuration; possibility to reset to original state
@@ -12,22 +18,22 @@
 
 ## Question development
 
-### Q1 — INTERFACES
+### Q1 — INTERFACES (routing for this tool only)
 
-**Does the PDE have any interface that allows interaction?**
+**For this IAM-focused questionnaire, does the product expose interaction surfaces where users, administrators, other devices, or remote services can obtain access, configuration, or control in a way that involves identity or access?** The question routes this questionnaire only; it does **not** substitute legal CRA “product with digital elements” qualification.
 
-- → **No:** The PDE likely falls outside CRA scope. Document the justification in technical documentation. End of survey.
+- → **No:** End of this questionnaire path; no mapped CRA–framework report. Not the same as concluding the product is outside the CRA—document classification separately.
 - → **Yes:** Continue to Q2.
 
 ---
 
 ### Q2 — AUTHENTICATION COVERAGE
 
-**Does the PDE implement authentication on ALL interfaces identified in Q1?**  
-For each interface: is there a mechanism that verifies the identity of the entity (user, device, service) before granting access? Include both human-facing and machine-to-machine interfaces.
+**Does the PDE implement authentication on ALL interaction surfaces answered “Yes” in Q1?**  
+For each surface: is there a mechanism that verifies the identity of the entity (user, device, service) before granting access? Include both human-facing and machine-to-machine interfaces.
 
 - → **All interfaces have authentication:** Continue to Q4.
-- → **Some interfaces have auth, some don't:** GAP — Document which interfaces lack authentication. Potential violation of Annex I, 2(d) and 2(j). Continue to Q3 for the unprotected interfaces AND Q4 for the protected ones.
+- → **Some interfaces have authentication, some do not:** GAP — Document which interfaces lack authentication. Potential violation of Annex I, 2(d) and 2(j). Continue to Q3 for the unprotected interfaces AND Q4 for the protected ones.
 - → **No authentication at all:** Continue to Q3 (Architecture C assessment).
 
 ---
@@ -43,7 +49,7 @@ The PDE has no (or inadequate) authentication. Assess the current state:
 - → **Yes:**  
   ⛔ NON-COMPLIANCE  
   Violates: 2(b) secure defaults, 2(d) access control, 2(e) credential confidentiality, 2(i) impact on other devices (if credentials shared across).  
-  **TODO:** implement unique per-device credentials (factory-provisioned or forced first-use setup).
+  **Required action:** Implement unique per-device credentials (factory-provisioned or forced first-use setup).
 
 #### Q3b — RISK JUSTIFICATION
 
@@ -51,10 +57,10 @@ The PDE has no (or inadequate) authentication. Assess the current state:
 
 - → **Yes — justification exists:**  
   ℹ JUSTIFIED ABSENCE — VERIFY  
-  Review the justification. Justification is typically only defensible if the PDE has no network connectivity AND processes no data affecting security/safety/privacy. → Apply Control Set C.
+  Review the justification. Justification is typically only defensible if the PDE has no network connectivity AND processes no data affecting security/safety/privacy. **Architecture C** (no or minimal in-product IAM): maintain Art. 13(4) documentation and residual risk review.
 
 - → **No — justification missing:**  
-  The manufacturer must either: (a) implement authentication, or (b) produce a defensible Art. 13(4) justification. In practice, (a) is almost always required for any connected PDE. → Apply Control Set C.
+  The manufacturer must either: (a) implement authentication, or (b) produce a defensible Art. 13(4) justification. In practice, (a) is almost always required for any connected PDE. **Architecture C** until remediated or justified.
 
 ---
 
@@ -63,10 +69,10 @@ The PDE has no (or inadequate) authentication. Assess the current state:
 **Where does authentication and access control happen?**  
 Consider the full authentication flow: where credentials are verified, where access decisions are made, and where they are enforced.
 
-- → **Entirely on-device (local credentials, local decision, local enforcement):** Architecture A — Apply Control Set A. Continue to Q6.
+- → **Entirely on-device (local credentials, local decision, local enforcement):** Architecture A. Continue to Q6.
 - → **Entirely via remote/cloud service:** Architecture B — Continue to Q5, then Q6.
-- → **Both local AND remote (hybrid):** Architecture A+B — Both control sets apply. Continue to Q5 for the remote component, then Q6.
-- → **Delegated to customer's existing infrastructure (LDAP, Active Directory, RADIUS, SAML/OIDC federation to customer IdP):** Architecture D — Apply Control Set D. Continue to Q6.
+- → **Both local AND remote (hybrid):** Architecture A+B — Continue to Q5 for the remote component, then Q6.
+- → **Delegated to customer's existing infrastructure (LDAP, Active Directory, RADIUS, SAML/OIDC federation to customer IdP):** Architecture D. Continue to Q6.
 
 *Note on Architecture D:* Distinct from Architecture B. In B the manufacturer operates the remote IAM service. In D the PDE integrates into the customer's IAM — manufacturer provides integration but does not operate the IAM service. CRA scope: Architecture D's customer-side IAM is not the manufacturer's "remote data processing solution."
 
@@ -78,13 +84,13 @@ Consider the full authentication flow: where credentials are verified, where acc
 CRA Article 3(2) defines "remote data processing solution" as software designed by or on behalf of the manufacturer, without which the PDE cannot perform one of its functions.
 
 - → **Yes — manufacturer's own cloud backend or commissioned development:**  
-  Architecture B — FULL CRA SCOPE. The remote IAM service is within CRA scope. All Annex I requirements apply. → Apply Control Set B-FULL.
+  Architecture B — FULL CRA SCOPE. The remote IAM service is within CRA scope. All Annex I requirements apply.
 
 - → **No — third-party service (Auth0, AWS Cognito, Azure AD B2C, Firebase Auth, etc.):**  
-  Architecture B — THIRD-PARTY. Third-party IAM is outside CRA remote data processing scope. Due diligence under Art. 13(5) applies. PDE must still meet all essential requirements. → Apply Control Set B-3P.
+  Architecture B — THIRD-PARTY. Third-party IAM is outside CRA remote data processing scope. Due diligence under Art. 13(5) applies. PDE must still meet all essential requirements.
 
 - → **Partially — manufacturer's orchestration/customisation layer on top of third-party IdP:**  
-  Architecture B — HYBRID SCOPE. Manufacturer's layer: full CRA scope. Underlying third-party IdP: due diligence only. → Control Set B-FULL (own layer) + B-3P (underlying IdP).
+  Architecture B — HYBRID SCOPE. Manufacturer's layer: full CRA scope. Underlying third-party IdP: due diligence only.
 
 ---
 

@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "description": "CRA IAM mapping: Layer 1 (survey profile → applicable CRA requirements) and Layer 2 (CRA requirement → framework controls). Companion to docs/survey-source.md and the determination survey.",
+  "description": "CRA IAM mapping: Layer 1 (survey profile → applicable CRA requirements) and Layer 2 (CRA requirement → framework controls). Companion to docs/survey-source.md and the determination survey. Layer 2 clause references to NIST SP 800-63B, ISO/IEC 15408 (CC), and other standards are project-authored cross-mappings for discussion; they are not official ENISA or standards-body crosswalks.",
   "framework_keys": {
     "EN_303_645": {
       "label": "ETSI EN 303 645",

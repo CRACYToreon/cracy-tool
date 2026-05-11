@@ -9,6 +9,69 @@ import { humanQuestionRef } from "./question-labels.js";
 
 const jsonLogic = window.jsonLogic;
 
+const WELCOME_STORAGE_KEY = "cracy_welcome_seen_v1";
+
+function initWelcomeModal() {
+  const overlay = document.getElementById("survey-welcome-overlay");
+  const dismiss = document.getElementById("survey-welcome-dismiss");
+  const about = document.getElementById("survey-welcome-about");
+  if (!overlay || !dismiss) return;
+
+  let persistOnDismiss = false;
+
+  function openWelcome(opts) {
+    const o = opts || {};
+    persistOnDismiss = !!o.persistOnDismiss;
+    overlay.removeAttribute("hidden");
+    document.body.classList.add("survey-welcome-open");
+    dismiss.textContent = persistOnDismiss ? "Continue to survey" : "Close";
+    dismiss.focus();
+  }
+
+  function closeWelcome() {
+    overlay.setAttribute("hidden", "");
+    document.body.classList.remove("survey-welcome-open");
+    if (persistOnDismiss) {
+      try {
+        localStorage.setItem(WELCOME_STORAGE_KEY, "1");
+      } catch (_) {}
+    }
+    persistOnDismiss = false;
+  }
+
+  dismiss.addEventListener("click", closeWelcome);
+  if (about) {
+    about.addEventListener("click", () => openWelcome({ persistOnDismiss: false }));
+  }
+
+  overlay.addEventListener("click", (e) => {
+    if (e.target === overlay) closeWelcome();
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape") return;
+    if (overlay.hasAttribute("hidden")) return;
+    closeWelcome();
+  });
+
+  let seen = false;
+  try {
+    seen = !!localStorage.getItem(WELCOME_STORAGE_KEY);
+  } catch (_) {
+    seen = false;
+  }
+  if (!seen) {
+    if (overlay.hasAttribute("hidden")) {
+      openWelcome({ persistOnDismiss: true });
+    } else {
+      persistOnDismiss = true;
+    }
+  }
+  if (!overlay.hasAttribute("hidden") && !document.body.classList.contains("survey-welcome-open")) {
+    document.body.classList.add("survey-welcome-open");
+  }
+}
+
 /** Minimal JSON-Logic fallback for var, ==, !=, or, all (when CDN fails to load). */
 function fallbackLogic(expr, data) {
   if (expr == null) return false;
@@ -39,6 +102,8 @@ const container = document.getElementById("survey-container");
 const summaryBody = document.getElementById("survey-summary-body");
 const progressEl = document.getElementById("survey-progress");
 
+let surveyRenderApi = { render: () => {}, clearEnded: () => {} };
+
 function escapeSummaryHtml(str) {
   const div = document.createElement("div");
   div.textContent = str == null ? "" : String(str);
@@ -57,19 +122,217 @@ function sortAnswerKeys(keys) {
   );
 }
 
-function updateSummary(engine) {
+function orderedAnswerKeys(keys, questions) {
+  const want = new Set(keys);
+  const out = [];
+  for (const q of questions) {
+    if ((q.type === "single" || q.type === "multi") && want.has(q.id)) out.push(q.id);
+  }
+  for (const k of sortAnswerKeys(keys)) {
+    if (!out.includes(k)) out.push(k);
+  }
+  return out;
+}
+
+function plainQuestionText(text) {
+  if (text == null) return "";
+  return String(text)
+    .replace(/\*\*(.+?)\*\*/g, "$1")
+    .replace(/\s*\n+\s*/g, " ")
+    .trim();
+}
+
+function resolveAnswerSummary(q, raw) {
+  if (!q) return formatAnswerValue(raw);
+  if (q.type === "multi" && Array.isArray(raw)) {
+    const labels = (q.options || [])
+      .filter((o) => raw.includes(o.value))
+      .map((o) => o.label);
+    return labels.length ? labels.join("; ") : formatAnswerValue(raw);
+  }
+  if (q.type === "single" && raw != null && raw !== "") {
+    const opt = (q.options || []).find((o) => o.value === raw);
+    return opt ? opt.label : String(raw);
+  }
+  return formatAnswerValue(raw);
+}
+
+function buildAnswersExportPayload(engine, questions, session) {
+  const byId = new Map(questions.map((q) => [q.id, q]));
+  const answers = engine.answers || {};
+  const keys = orderedAnswerKeys(Object.keys(answers), questions);
+  const responses = keys.map((id) => {
+    const q = byId.get(id);
+    return {
+      questionId: id,
+      questionText: q ? plainQuestionText(q.text) : "",
+      storedValue: answers[id],
+      answerSummary: resolveAnswerSummary(q, answers[id]),
+    };
+  });
+  return {
+    exportVersion: 1,
+    exportedAt: new Date().toISOString(),
+    postSurveyPhase: session.phase,
+    selectedFrameworks: session.selectedFrameworks,
+    responses,
+    answers: { ...answers },
+  };
+}
+
+function escHtmlAttr(str) {
+  return String(str).replace(/&/g, "&amp;").replace(/"/g, "&quot;");
+}
+
+/** Full HTML document for print/PDF (opened via print-report.html so the URL is not about:blank). */
+function buildReportPrintDocumentHtml(engine, session, mappingBundle) {
+  const fw = session.selectedFrameworks || [];
+  const rec = buildRecommendations(engine);
+  const assembled = buildAssembledReportHtml(engine, fw, mappingBundle);
+  const baseHref = escHtmlAttr(new URL(".", window.location.href).href);
+  const printCss =
+    "html{box-sizing:border-box;background:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}" +
+    "*,*::before,*::after{box-sizing:inherit}" +
+    "body.survey-print-doc{margin:0;padding:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:#fff!important;color:#121212!important;-webkit-text-fill-color:#121212!important;font-size:11pt;line-height:1.45}" +
+    "body.survey-print-doc header{margin:0 0 0.75rem 0;padding:0 0 0.5rem 0;border-bottom:1px solid #ccc;background:#fff!important}" +
+    "body.survey-print-doc header h1{margin:0;font-size:14pt;font-weight:650;color:#0d1117!important;-webkit-text-fill-color:#0d1117!important}" +
+    "body.survey-print-doc main{max-width:100%;width:100%;box-sizing:border-box;background:#fff!important;color:#121212!important;padding:0;margin:0;overflow-x:hidden}" +
+    /* Undo wide-viewport grid/sticky from survey.css so everything stacks within page width */
+    "body.survey-print-doc .survey-assembled--layout{display:block!important;grid-template-columns:unset!important;gap:1rem!important}" +
+    "body.survey-print-doc .survey-assembled__rail,body.survey-print-doc .survey-assembled__main{display:block!important;width:100%!important;max-width:100%!important;min-width:0!important;position:static!important}" +
+    "body.survey-print-doc .survey-assembled__rail{max-height:none!important;overflow:visible!important;padding-right:0!important}" +
+    "body.survey-print-doc .survey-cra-section__cards{display:block!important;grid-template-columns:unset!important}" +
+    "body.survey-print-doc .survey-addon-section{display:block!important;grid-template-columns:unset!important}" +
+    "body.survey-print-doc .survey-fw-grid{display:block!important;width:100%!important}" +
+    "body.survey-print-doc .survey-fw-card{width:100%!important;max-width:100%!important;box-sizing:border-box}" +
+    "body.survey-print-doc .survey-digest__list{grid-template-columns:minmax(0,1fr)!important}" +
+    /* Readable on white: force dark text on light surfaces (after survey.css) */
+    "body.survey-print-doc main,body.survey-print-doc main p,body.survey-print-doc main li,body.survey-print-doc main dt,body.survey-print-doc main dd," +
+    "body.survey-print-doc main td,body.survey-print-doc main th,body.survey-print-doc main span,body.survey-print-doc main div,body.survey-print-doc main label," +
+    "body.survey-print-doc main strong{color:#121212!important;-webkit-text-fill-color:#121212!important}" +
+    "body.survey-print-doc main h2,body.survey-print-doc main h3,body.survey-print-doc main h4," +
+    "body.survey-print-doc main .survey-assembled-title,body.survey-print-doc main .survey-cra-card__title," +
+    "body.survey-print-doc main .survey-fw-card__name,body.survey-print-doc main .survey-addon-card__title{color:#0d1117!important;-webkit-text-fill-color:#0d1117!important}" +
+    "body.survey-print-doc main .survey-muted,body.survey-print-doc main .survey-explanation__p," +
+    "body.survey-print-doc main .survey-digest__prose,body.survey-print-doc main .survey-fw-card__help{color:#3d3d3d!important;-webkit-text-fill-color:#3d3d3d!important}" +
+    "body.survey-print-doc main .survey-recommendation,body.survey-print-doc main .survey-recommendation-text," +
+    "body.survey-print-doc main .survey-recommendation-title{color:#121212!important;-webkit-text-fill-color:#121212!important}" +
+    "body.survey-print-doc main .survey-recommendations,body.survey-print-doc main .survey-recommendations-wrap,body.survey-print-doc main .survey-assembled," +
+    "body.survey-print-doc main .survey-digest,body.survey-print-doc main .survey-profile-card," +
+    "body.survey-print-doc main .survey-cra-card,body.survey-print-doc main .survey-fw-card," +
+    "body.survey-print-doc main .survey-addon-card,body.survey-print-doc main .survey-explanation," +
+    "body.survey-print-doc main .survey-risk-tile,body.survey-print-doc main .survey-recommendation{background:#fff!important;color:#121212!important;border-color:#c9c9c9!important;-webkit-text-fill-color:#121212!important}" +
+    "body.survey-print-doc main .survey-cra-pill,body.survey-print-doc main .survey-pill," +
+    "body.survey-print-doc main .survey-digest__badge{background:#ececec!important;color:#111!important;border:1px solid #888!important;-webkit-text-fill-color:#111!important}" +
+    "body.survey-print-doc main .survey-cra-card__id,body.survey-print-doc main code," +
+    "body.survey-print-doc main .survey-addon-ref{color:#032f62!important;background:#eef2f6!important;border:1px solid #bbb!important;-webkit-text-fill-color:#032f62!important}" +
+    "body.survey-print-doc main a{color:#0550ae!important;-webkit-text-fill-color:#0550ae!important}" +
+    "@page{size:A4;margin:11mm}" +
+    "@media print{" +
+    "body.survey-print-doc{font-size:10.5pt}" +
+    "body.survey-print-doc,body.survey-print-doc main,html{background:#fff!important}" +
+    "body.survey-print-doc{padding:0!important;margin:0!important}" +
+    "body.survey-print-doc main{overflow-wrap:anywhere}" +
+    "*{box-shadow:none!important;text-shadow:none!important}" +
+    ".survey-cra-card,.survey-fw-card,.survey-addon-card,.survey-digest,.survey-profile-card,.survey-recommendations,.survey-recommendations-wrap{break-inside:avoid;page-break-inside:avoid}" +
+    ".survey-fw-card{margin-bottom:0.5rem}" +
+    "}";
+  const headAssets =
+    `<base href="${baseHref}" />` +
+    '<link rel="stylesheet" href="css/survey.css" />' +
+    '<link rel="stylesheet" href="css/ui.css" />' +
+    `<style>${printCss}</style>`;
+  const printRunner =
+    "<script>" +
+    "(function(){var printed=false;function runPrint(){if(printed)return;printed=true;try{window.focus();window.print();}catch(e){}}" +
+    "var links=[].slice.call(document.querySelectorAll('link[rel=\"stylesheet\"]'));" +
+    "if(!links.length){setTimeout(runPrint,350);return;}" +
+    "var pending=links.length;function tick(){pending--;if(pending<=0)setTimeout(runPrint,150);}" +
+    "links.forEach(function(link){if(link.sheet)tick();else{link.addEventListener('load',tick);link.addEventListener('error',tick);}});" +
+    "setTimeout(runPrint,2400);})();" +
+    "<\/script>";
+  return (
+    "<!DOCTYPE html>\n<html lang=\"en\"><head><meta charset=\"utf-8\" />" +
+    headAssets +
+    '<meta name="viewport" content="width=device-width, initial-scale=1" />' +
+    "<title>CRA report</title></head><body class=\"survey-print-doc\">\n" +
+    "<header><h1>CRA questionnaire report</h1></header>\n" +
+    "<main>" +
+    rec +
+    assembled +
+    "</main>\n" +
+    printRunner +
+    "\n</body></html>"
+  );
+}
+
+function openReportPrintOrPdf(engine, session, mappingBundle) {
+  const html = buildReportPrintDocumentHtml(engine, session, mappingBundle);
+  try {
+    sessionStorage.setItem("craPrintReportHtml", html);
+  } catch (e) {
+    alert("Could not store the report for printing (storage may be full). Try again or use a shorter report.");
+    return;
+  }
+  const printUrl = new URL("print-report.html", window.location.href).href;
+  const w = window.open(printUrl, "_blank");
+  if (!w) {
+    try {
+      sessionStorage.removeItem("craPrintReportHtml");
+    } catch (_) {}
+    alert("Pop-up was blocked. Allow pop-ups for this site, then try again.");
+  }
+}
+
+function canGoPrevious(engine) {
+  const cid = engine.getCurrentQuestionId();
+  if (cid == null) return false;
+  const visible = engine.getVisibleQuestions();
+  const idx = visible.findIndex((q) => q.id === cid);
+  if (idx <= 0) return false;
+  let t = idx - 1;
+  while (t >= 0 && visible[t].type === "message") t--;
+  return t >= 0;
+}
+
+function isReportExportReady(session) {
+  return (
+    session &&
+    session.phase === "report" &&
+    Array.isArray(session.selectedFrameworks) &&
+    session.selectedFrameworks.length > 0
+  );
+}
+
+let exportJsonButtonDefaultHtml = "";
+
+function cacheExportButtonDefaults() {
+  const j = document.getElementById("btn-copy");
+  if (j) exportJsonButtonDefaultHtml = j.innerHTML;
+}
+
+function updateSummary(engine, questions) {
   const answers = engine.answers;
   const keys = Object.keys(answers);
+  const byId = new Map(questions.map((q) => [q.id, q]));
   if (keys.length === 0) {
     summaryBody.textContent = "No answers yet.";
     return;
   }
   let html = '<dl class="survey-summary-list">';
-  for (const key of sortAnswerKeys(keys)) {
+  for (const key of orderedAnswerKeys(keys, questions)) {
     const label = humanQuestionRef(key);
-    const value = formatAnswerValue(answers[key]);
-    html += `<dt class="survey-summary-list__dt">${escapeSummaryHtml(label)}</dt>`;
-    html += `<dd class="survey-summary-list__dd">${escapeSummaryHtml(value)}</dd>`;
+    const value = resolveAnswerSummary(byId.get(key), answers[key]);
+    const jump = byId.get(key) && (byId.get(key).type === "single" || byId.get(key).type === "multi");
+    if (jump) {
+      html += '<div class="survey-summary-row">';
+      html += `<dt class="survey-summary-list__dt survey-summary-row__hit" data-jump-question="${escapeSummaryHtml(key)}" role="button" tabindex="0" title="Go to this question">${escapeSummaryHtml(label)}</dt>`;
+      html += `<dd class="survey-summary-list__dd survey-summary-row__hit" data-jump-question="${escapeSummaryHtml(key)}" title="Go to this question">${escapeSummaryHtml(value)}</dd>`;
+      html += "</div>";
+    } else {
+      html += `<dt class="survey-summary-list__dt">${escapeSummaryHtml(label)}</dt>`;
+      html += `<dd class="survey-summary-list__dd">${escapeSummaryHtml(value)}</dd>`;
+    }
   }
   html += "</dl>";
   summaryBody.innerHTML = html;
@@ -93,10 +356,23 @@ function updateProgress(engine, totalQuestions, isSurveyEnded) {
     `<div class="progress__fill" style="width:${pct}%"></div></div>`;
 }
 
-function refreshUi(engine, totalQuestions, isSurveyEnded) {
+function refreshUi(engine, totalQuestions, isSurveyEnded, questions, session) {
   if (isSurveyEnded === undefined) isSurveyEnded = false;
-  updateSummary(engine);
+  updateSummary(engine, questions || []);
   updateProgress(engine, totalQuestions, isSurveyEnded);
+  const prevBtn = document.getElementById("btn-previous");
+  if (prevBtn) prevBtn.disabled = !canGoPrevious(engine);
+  const reportReady = isReportExportReady(session);
+  const hint = document.getElementById("survey-export-hint");
+  const actions = document.getElementById("survey-export-actions");
+  if (hint && actions) {
+    actions.hidden = !reportReady;
+    hint.hidden = reportReady;
+  }
+  const copyBtn = document.getElementById("btn-copy");
+  const printBtn = document.getElementById("btn-print-report");
+  if (copyBtn) copyBtn.disabled = !reportReady;
+  if (printBtn) printBtn.disabled = !reportReady;
 }
 
 async function loadMappingBundle() {
@@ -117,6 +393,8 @@ async function loadMappingBundle() {
 }
 
 async function init() {
+  initWelcomeModal();
+
   let data;
   let mappingBundle = null;
   let postSurveyConfig = null;
@@ -158,9 +436,9 @@ async function init() {
   const session = { phase: "frameworks", selectedFrameworks: [] };
 
   function doRender() {
-    render(container, engine, {
-      onEnd: (state) => refreshUi(engine, totalQuestions, state.ended),
-      onUpdate: (opts) => refreshUi(engine, totalQuestions, opts && opts.surveyComplete),
+    surveyRenderApi = render(container, engine, {
+      onEnd: (state) => refreshUi(engine, totalQuestions, state.ended, questions, session),
+      onUpdate: (opts) => refreshUi(engine, totalQuestions, opts && opts.surveyComplete, questions, session),
       getRecommendations: (eng) => buildRecommendations(eng),
       session,
       postSurveyConfig,
@@ -168,22 +446,66 @@ async function init() {
     });
   }
 
+  function afterNavigate() {
+    surveyRenderApi.render();
+    refreshUi(engine, totalQuestions, false, questions, session);
+  }
+
   doRender();
-  refreshUi(engine, totalQuestions, false);
+  refreshUi(engine, totalQuestions, false, questions, session);
+  cacheExportButtonDefaults();
+
+  summaryBody.addEventListener("click", (e) => {
+    const hit = e.target.closest("[data-jump-question]");
+    if (!hit || !summaryBody.contains(hit)) return;
+    const qid = hit.getAttribute("data-jump-question");
+    if (!qid) return;
+    const wasComplete = engine.allApplicableAnswered && engine.allApplicableAnswered();
+    surveyRenderApi.clearEnded();
+    if (!engine.goToQuestion(qid)) return;
+    if (wasComplete) {
+      session.phase = "frameworks";
+      session.selectedFrameworks = [];
+    }
+    afterNavigate();
+  });
+
+  summaryBody.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    const hit = e.target.closest("[data-jump-question]");
+    if (!hit || !summaryBody.contains(hit)) return;
+    e.preventDefault();
+    hit.click();
+  });
 
   document.getElementById("btn-copy").addEventListener("click", () => {
-    const payload = {
-      answers: engine.answers,
-      selectedFrameworks: session.selectedFrameworks,
-      postSurveyPhase: session.phase,
-    };
+    if (!isReportExportReady(session)) return;
+    const payload = buildAnswersExportPayload(engine, questions, session);
     const json = JSON.stringify(payload, null, 2);
+    const btn = document.getElementById("btn-copy");
     navigator.clipboard.writeText(json).then(() => {
-      const btn = document.getElementById("btn-copy");
-      const prev = btn.textContent;
-      btn.textContent = "Copied!";
-      setTimeout(() => { btn.textContent = prev; }, 1500);
+      btn.innerHTML =
+        '<span class="survey-export-btn__title">Copied to clipboard</span><span class="survey-export-btn__meta">JSON</span>';
+      setTimeout(() => {
+        btn.innerHTML = exportJsonButtonDefaultHtml;
+      }, 1500);
     });
+  });
+
+  document.getElementById("btn-print-report").addEventListener("click", () => {
+    if (!isReportExportReady(session)) return;
+    openReportPrintOrPdf(engine, session, mappingBundle);
+  });
+
+  document.getElementById("btn-previous").addEventListener("click", () => {
+    const wasComplete = engine.allApplicableAnswered && engine.allApplicableAnswered();
+    surveyRenderApi.clearEnded();
+    if (!engine.goToPrevious()) return;
+    if (wasComplete) {
+      session.phase = "frameworks";
+      session.selectedFrameworks = [];
+    }
+    afterNavigate();
   });
 
   document.getElementById("btn-reset").addEventListener("click", () => {
@@ -191,7 +513,7 @@ async function init() {
     session.phase = "frameworks";
     session.selectedFrameworks = [];
     doRender();
-    refreshUi(engine, totalQuestions, false);
+    refreshUi(engine, totalQuestions, false, questions, session);
   });
 }
 

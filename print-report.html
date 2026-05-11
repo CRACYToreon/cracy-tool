@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="robots" content="noindex,nofollow" />
+  <title>CRA questionnaire report</title>
+  <script>
+    (function () {
+      var key = "craPrintReportHtml";
+      var html = sessionStorage.getItem(key);
+      if (html) sessionStorage.removeItem(key);
+      if (!html) {
+        document.open();
+        document.write(
+          "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"utf-8\"/><title>CRA questionnaire report</title></head><body style=\"font-family:system-ui,sans-serif;padding:2rem;line-height:1.5;color:#333\">" +
+            "<p>No report data was found. Close this tab and use <strong>Print or save as PDF</strong> again from the questionnaire.</p>" +
+            "</body></html>"
+        );
+        document.close();
+        return;
+      }
+      document.open();
+      document.write(html);
+      document.close();
+    })();
+  </script>
+</head>
+<body></body>
+</html>

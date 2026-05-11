@@ -3,28 +3,28 @@
     {
       "id": "Q1",
       "type": "single",
-      "text": "Does the PDE have any interface that allows interaction?",
+      "text": "Does this product authenticate or authorise any user, administrator, device, or external service?",
       "options": [
+        {
+          "value": "yes",
+          "label": "Yes"
+        },
         {
           "value": "no",
           "label": "No",
           "end": true,
-          "finalMessage": "The PDE likely falls outside CRA scope. Document the justification in technical documentation. End of survey."
-        },
-        {
-          "value": "yes",
-          "label": "Yes"
+          "finalMessage": "This questionnaire covers IAM-related CRA requirements. If your product has no authentication or authorisation functions, these questions do not apply. Assess other CRA Annex I requirements separately."
         }
       ]
     },
     {
       "id": "Q2",
       "type": "single",
-      "text": "Does the PDE implement authentication on ALL interfaces identified in Question 1?\nFor each interface: is there a mechanism that verifies the identity of the entity (user, device, service) before granting access? Include both human-facing and machine-to-machine interfaces.",
+      "text": "Does the PDE implement authentication on ALL interfaces?\nFor each interface: is there a mechanism that verifies the identity of the entity (user, device, service) before granting access? Include both human-facing and machine-to-machine interfaces.",
       "showIf": { "==": [ { "var": "answers.Q1" }, "yes" ] },
       "options": [
         { "value": "all",  "label": "All interfaces have authentication" },
-        { "value": "some", "label": "Some interfaces have auth, some don't" },
+        { "value": "some", "label": "Some interfaces have authentication, some do not" },
         { "value": "none", "label": "No authentication at all" }
       ]
     },
@@ -43,8 +43,7 @@
           "value": "yes",
           "label": "Yes",
           "end": true,
-          "finalMessage": "⛔ NON-COMPLIANCE\n\nViolates: 2(b) secure defaults, 2(d) access control, 2(e) credential confidentiality, 2(i) impact on other devices (if credentials shared across).\n\n**TODO**: Implement unique per-device credentials (factory-provisioned or forced first-use setup)."
-        },
+          "finalMessage": "⛔ CRITICAL NON-COMPLIANCE\n\nThe PDE ships with hardcoded or shared default credentials, violating CRA Annex I 2(b), 2(d), 2(e), and potentially 2(i). Implement unique per-device credentials, either factory-provisioned or enforced at first use."        },
         {
           "value": "no",
           "label": "No"
@@ -69,14 +68,12 @@
           "value": "yes",
           "label": "Yes, justification exists",
           "end": true,
-          "finalMessage": "ℹ JUSTIFIED ABSENCE - VERIFY\n\nReview the justification. It is typically only defensible if the PDE has no network connectivity AND processes no data affecting security/safety/privacy.\n\nApply **Control Set C**. End of survey."
-        },
+          "finalMessage": "ℹ JUSTIFIED ABSENCE - VERIFY\n\nNo authentication is implemented but a risk justification is documented. This is only defensible if the PDE has no network connectivity and processes no data affecting security, safety, or privacy. Review the justification against CRA Recital 9 before proceeding."        },
         {
           "value": "no",
           "label": "No, justification missing",
           "end": true,
-          "finalMessage": "⚠️ NON-COMPLIANCE\n\nThe manufacturer must either: (a) implement authentication, or (b) produce a defensible Art. 13(4) justification. In practice, (a) is almost always required for any connected PDE.\n\nApply **Control Set C**. End of survey."
-        }
+          "finalMessage": "⚠️ NON-COMPLIANCE\n\nNo authentication is implemented and no justification exists. The manufacturer must either implement authentication or produce a defensible Art. 13(4) justification. For any connected PDE, implementing authentication is almost always required."        }
       ]
     },
     {
@@ -234,7 +231,7 @@
     {
       "id": "END",
       "type": "message",
-      "text": "Thank you for completing the survey.\n\n"
+      "text": "Survey complete.\n\nBelow is your IAM profile, risk calibration, and the applicable CRA Annex I requirements mapped to the reference frameworks you selected. These mappings are project-authored cross-references intended for gap analysis only. They are not official ENISA publications or endorsed crosswalks from any standards body."
     }
   ]
 }

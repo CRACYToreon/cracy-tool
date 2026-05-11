@@ -115,8 +115,13 @@ export function render(container, engine, callbacks = {}) {
         const intro = document.createElement("p");
         intro.className = "survey-result-hero-lead";
         intro.textContent =
-          "The next screens summarise your answers: practical recommendations first, then your inputs and profile, then CRA requirements mapped to the frameworks you selected. Use Back and Next to move through each section.";
+          "The next screens summarise your answers: practical recommendations first, then your inputs and profile, then CRA requirements with illustrative links to the frameworks you selected (project-authored cross-mappings, not official ENISA or standards-body tables). Use Back and Next to move through each section.";
         hero.appendChild(intro);
+        const reportCue = document.createElement("p");
+        reportCue.className = "survey-result-hero-reportcue";
+        reportCue.innerHTML =
+          "<strong>Where is the full report?</strong> Scroll below the recommendations. The <strong>Detailed report: CRA requirements and frameworks</strong> section contains your digest, CRA rows, and framework references, with Back and Next on the carousel to move through each part.";
+        hero.appendChild(reportCue);
         const panel = document.createElement("div");
         panel.className = "survey-result-hero__panel";
         const panelTitle = document.createElement("h3");
@@ -142,15 +147,18 @@ export function render(container, engine, callbacks = {}) {
         rec.innerHTML = getRecommendations(engine);
         el.appendChild(rec);
         if (isEnd && buildAssembledReport && session && session.phase === "report" && Array.isArray(session.selectedFrameworks)) {
+          const reportAnchor = document.createElement("div");
+          reportAnchor.className = "survey-report-anchor";
+          reportAnchor.id = "cra-detailed-report";
+          reportAnchor.innerHTML =
+            '<h2 class="survey-report-anchor__title">Detailed report: CRA requirements and frameworks</h2>' +
+            '<p class="survey-report-anchor__lead">Your digest, applicable CRA rows, and selected framework references are in the block below. Use the carousel <strong>Back</strong> and <strong>Next</strong> controls to step through each section.</p>';
+          el.appendChild(reportAnchor);
           const asm = document.createElement("div");
           asm.className = "survey-assembled-wrap survey-assembled-wrap--pretty";
           asm.innerHTML = buildAssembledReport(engine, session.selectedFrameworks);
           el.appendChild(asm);
         }
-        const footer = document.createElement("p");
-        footer.className = "survey-end-footer";
-        //footer.innerHTML = "Export JSON from the summary panel (includes answers and selected frameworks). See <strong>docs/survey-source.md</strong> for full question development.";
-        el.appendChild(footer);
       } else {
         el.appendChild(label);
       }
@@ -234,6 +242,11 @@ export function render(container, engine, callbacks = {}) {
       .replace(/\n/g, "<br>");
   }
 
+  function clearEnded() {
+    state.ended = false;
+    state.finalMessage = null;
+  }
+
   renderToDom();
-  return { render: renderToDom, setEnded };
+  return { render: renderToDom, setEnded, clearEnded };
 }

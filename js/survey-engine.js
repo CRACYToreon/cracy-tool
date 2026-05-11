@@ -108,10 +108,45 @@ export function createEngine(questions, jsonLogic) {
     currentQuestionId = null;
   }
 
+  /**
+   * Jump to a answered question: clears this question's answer and all later visible answers.
+   * Only single/multi ids are valid targets.
+   */
+  function goToQuestion(qId) {
+    const visible = getVisibleQuestions();
+    const t = visible.findIndex(
+      (qu) => qu.id === qId && (qu.type === "single" || qu.type === "multi")
+    );
+    if (t < 0) return false;
+    for (let j = t; j < visible.length; j++) {
+      const q = visible[j];
+      if (q.type === "single" || q.type === "multi") delete answers[q.id];
+    }
+    currentQuestionId = qId;
+    return true;
+  }
+
+  /** Move to the previous visible single/multi question and clear answers from there onward. */
+  function goToPrevious() {
+    const visible = getVisibleQuestions();
+    const idx = visible.findIndex((qu) => qu.id === currentQuestionId);
+    if (idx <= 0) return false;
+    let t = idx - 1;
+    while (t >= 0 && visible[t].type === "message") t--;
+    if (t < 0) return false;
+    const targetId = visible[t].id;
+    return goToQuestion(targetId);
+  }
+
+  function getCurrentQuestionId() {
+    return currentQuestionId;
+  }
+
   return {
     get answers() {
       return getAnswers();
     },
+    getCurrentQuestionId,
     getVisibleQuestions,
     getQuestionToShow,
     advanceToNext,
@@ -121,5 +156,7 @@ export function createEngine(questions, jsonLogic) {
     setMultiAnswer,
     getData,
     reset,
+    goToQuestion,
+    goToPrevious,
   };
 }

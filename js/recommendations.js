@@ -19,7 +19,7 @@ export function buildRecommendations(engine) {
   if (arch === "local") {
     sections.push({
       title: "Architecture",
-      text: "Architecture A (on-device). Apply Control Set A. Compliance focuses on local security controls, secure by default, logging, and vulnerability management.",
+      text: "Architecture A (on-device IAM). Focus compliance work on local security controls, secure defaults, logging, and vulnerability management.",
     });
   } else if (arch === "remote" || arch === "hybrid") {
     const scope = a.Q5;
@@ -27,26 +27,26 @@ export function buildRecommendations(engine) {
       sections.push({
         title: "Architecture",
         text: arch === "hybrid"
-          ? "Architecture A+B. Remote: B-FULL CRA scope. Apply Control Set B-FULL for the remote IAM service. All Annex I requirements apply to it."
-          : "Architecture B-FULL. Remote IAM is within CRA scope. Apply Control Set B-FULL. All Annex I requirements apply.",
+          ? "Architecture A+B. The manufacturer's remote IAM service is in full CRA scope; all Annex I requirements apply to that remote component."
+          : "Architecture B-FULL. Remote IAM is within CRA scope; all Annex I requirements apply to that service.",
       });
     } else if (scope === "no") {
       sections.push({
         title: "Architecture",
         text: arch === "hybrid"
-          ? "Architecture A+B. Remote: B-3P (third-party). Due diligence under Art. 13(5). Apply Control Set B-3P for the third-party component."
-          : "Architecture B-3P. Third-party IAM outside CRA remote data processing scope. Due diligence applies. Apply Control Set B-3P.",
+          ? "Architecture A+B. Remote IAM is third-party (B-3P): Art. 13(5) due diligence on the supplier relationship; the PDE must still meet essential requirements."
+          : "Architecture B-3P. Third-party IAM is outside CRA “remote data processing” scope for that component; Art. 13(5) due diligence applies.",
       });
     } else if (scope === "partial") {
       sections.push({
         title: "Architecture",
-        text: "Architecture B-HYBRID. Manufacturer's layer: full CRA scope (Control Set B-FULL). Underlying third-party IdP: due diligence (B-3P).",
+        text: "Architecture B-HYBRID. The manufacturer's own orchestration layer is in full CRA scope; the underlying third-party IdP is covered by Art. 13(5) due diligence.",
       });
     }
   } else if (arch === "customer") {
     sections.push({
       title: "Architecture",
-      text: "Architecture D (customer IAM). Apply Control Set D. Document integration guidance per Annex II, 8(f).",
+      text: "Architecture D (customer IAM). Document integration and security behaviour for operators per Annex II, 8(f).",
     });
   }
 
@@ -90,7 +90,7 @@ export function buildRecommendations(engine) {
     },
     {
       id: "Q8d",
-      yes: "**Audit:** Verify completeness per 2(l): auth attempts, access decisions, credential/config changes. User opt-out. Tamper protection on logs.",
+      yes: "**Audit:** Verify completeness per 2(l): authentication attempts, access decisions, credential/config changes. User opt-out. Tamper protection on logs.",
       no: "**GAP.** Violates 2(d) and 2(l). Must implement logging before Dec 2027.",
     },
     {

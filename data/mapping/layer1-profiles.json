@@ -12,7 +12,7 @@
     },
     "A_B": {
       "name": "Hybrid IAM",
-      "definition": "Both local and remote IAM (e.g. local fallback + cloud primary); both control sets apply.",
+      "definition": "Both local and remote IAM (e.g. local fallback + cloud primary); both local and remote IAM profiles apply.",
       "original_doc": "Many PDEs combine A and B (D2.3)"
     },
     "C": {
