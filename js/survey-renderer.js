@@ -150,9 +150,9 @@ export function render(container, engine, callbacks = {}) {
           const reportAnchor = document.createElement("div");
           reportAnchor.className = "survey-report-anchor";
           reportAnchor.id = "cra-detailed-report";
-          reportAnchor.innerHTML =
-            '<h2 class="survey-report-anchor__title">Detailed report: CRA requirements and frameworks</h2>' +
-            '<p class="survey-report-anchor__lead">Your digest, applicable CRA rows, and selected framework references are in the block below. Use the carousel <strong>Back</strong> and <strong>Next</strong> controls to step through each section.</p>';
+          //reportAnchor.innerHTML =
+          //  '<h2 class="survey-report-anchor__title">Detailed report: CRA requirements and frameworks</h2>' +
+          //  '<p class="survey-report-anchor__lead">Your digest, applicable CRA rows, and selected framework references are in the block below. Use the carousel <strong>Back</strong> and <strong>Next</strong> controls to step through each section.</p>';
           el.appendChild(reportAnchor);
           const asm = document.createElement("div");
           asm.className = "survey-assembled-wrap survey-assembled-wrap--pretty";
