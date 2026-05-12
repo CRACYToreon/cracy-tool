@@ -152,19 +152,15 @@ export function render(container, engine, callbacks = {}) {
           asm.innerHTML = buildAssembledReport(engine, session.selectedFrameworks);
           el.appendChild(asm);
         }
-        if (isEnd && getRecommendations && el.querySelector(".survey-recommendations-wrap")) {
-          requestAnimationFrame(() => {
-            requestAnimationFrame(() => mountReportCarousel(el));
-          });
-        }
+      } else {
         el.appendChild(label);
-        container.appendChild(el);
-        afterRender({ surveyComplete: true });
-        return;
       }
-
-      el.appendChild(label);
       container.appendChild(el);
+      if (isEnd && getRecommendations && el.querySelector(".survey-recommendations-wrap")) {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => mountReportCarousel(el));
+        });
+      }
       afterRender({ surveyComplete: true });
       return;
     }
