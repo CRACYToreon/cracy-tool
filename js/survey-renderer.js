@@ -160,6 +160,7 @@ export function render(container, engine, callbacks = {}) {
       afterRender({ surveyComplete: true });
       return;
     }
+  }
 
     el.appendChild(label);
 
