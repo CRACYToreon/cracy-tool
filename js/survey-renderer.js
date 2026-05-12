@@ -146,6 +146,12 @@ export function render(container, engine, callbacks = {}) {
         rec.className = "survey-recommendations-wrap survey-recommendations-wrap--pretty";
         rec.innerHTML = getRecommendations(engine);
         el.appendChild(rec);
+      if (isEnd && buildAssembledReport && session && session.phase === "report" && Array.isArray(session.selectedFrameworks)) {
+        const asm = document.createElement("div");
+        asm.className = "survey-assembled-wrap survey-assembled-wrap--pretty";
+        asm.innerHTML = buildAssembledReport(engine, session.selectedFrameworks);
+        el.appendChild(asm);
+      }
       if (isEnd && getRecommendations && el.querySelector(".survey-recommendations-wrap")) {
         requestAnimationFrame(() => {
           requestAnimationFrame(() => mountReportCarousel(el));
