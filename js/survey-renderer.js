@@ -146,7 +146,6 @@ export function render(container, engine, callbacks = {}) {
         rec.className = "survey-recommendations-wrap survey-recommendations-wrap--pretty";
         rec.innerHTML = getRecommendations(engine);
         el.appendChild(rec);
-      container.appendChild(el);
       if (isEnd && getRecommendations && el.querySelector(".survey-recommendations-wrap")) {
         requestAnimationFrame(() => {
           requestAnimationFrame(() => mountReportCarousel(el));
