@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CRA survey</title>
+  <title>CRA Compliance assessment tool for identity, access control</title>
   <link rel="stylesheet" href="css/survey.css" />
   <link rel="stylesheet" href="css/ui.css" />
 </head>
@@ -17,6 +17,7 @@
     >
       <h2 id="survey-welcome-title" class="survey-welcome-dialog__title">About this questionnaire</h2>
       <div class="survey-welcome-dialog__body">
+        <p class="survey-disclaimer"><strong>Not legal advice.</strong> This report supports internal CRA readiness work only. It does not constitute legal advice or evidence of compliance.</p>
         <p><strong>Purpose.</strong> This tool helps you assess IAM-related choices for a product under the CRA. It walks through questions about how your product authenticates and authorises users, admins, devices, or cloud services, and maps your answers to applicable CRA Annex I requirements and <strong>illustrative</strong> optional reference frameworks (ETSI EN 303 645, NIST SP 800-63B, IEC 62443-4-2, ISO/IEC 27002, ISO/IEC 15408 Common Criteria).</p>
         <p><strong>What you get.</strong> A report with your answers, risk profile, and CRA requirements mapped to the framework columns you selected. The output structure is explained on the completion screen.</p>
         <p><strong>Framework mapping.</strong> The links from CRA rows to NIST SP 800-63B, Common Criteria, and other standards are <strong>project-authored cross-mappings</strong> built into this application. They are intended for discussion and gap analysis only, and are <strong>not</strong> official ENISA publications, EU legal texts, or endorsed crosswalks from any standards body. Do not rely on them as authoritative in a formal conformity assessment.</p>
@@ -44,8 +45,8 @@
   <header class="survey-header">
     <div class="row row--between row--align-start">
       <div>
-        <h1>CRA questionnaire</h1>
-        <p class="survey-subtitle">PDE assessment</p>
+        <h1>CRA Compliance assessment tool for identity, access control</h1>
+        <p class="survey-subtitle">Identity and access control assessment for products with digital elements</p>
       </div>
       <button type="button" class="btn btn--ghost survey-welcome-about" id="survey-welcome-about" aria-haspopup="dialog" aria-controls="survey-welcome-overlay">
         About this questionnaire

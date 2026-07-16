@@ -1327,7 +1327,7 @@ body.survey-welcome-open {
 
 .survey-summary-list {
   display: grid;
-  grid-template-columns: minmax(0, auto) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
   gap: 0.35rem 0.75rem;
   margin: 0;
   font-size: 0.88rem;
@@ -1339,12 +1339,14 @@ body.survey-welcome-open {
   font-weight: 600;
   color: var(--survey-accent);
   align-self: start;
+  overflow-wrap: anywhere;
 }
 
 .survey-summary-list__dd {
   margin: 0;
   color: var(--survey-text);
-  word-break: break-word;
+  overflow-wrap: anywhere;
+  word-break: normal;
 }
 
 .survey-summary-row {
@@ -1792,4 +1794,84 @@ body.survey-welcome-open {
   .survey-carousel-slide {
     transition: none;
   }
+}
+
+/* --- Stakeholders badge on questions (who to involve) --- */
+.survey-question-role {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.5rem;
+  margin: 0 0 0.6rem;
+  padding: 0.3rem 0.6rem;
+  border: 1px solid var(--survey-border);
+  border-radius: var(--survey-radius);
+  background: var(--survey-accent-dim);
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+.survey-question-role__label {
+  color: var(--survey-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 0.66rem;
+}
+.survey-question-role__value {
+  color: var(--survey-text);
+}
+.survey-question-role__lead {
+  color: var(--survey-accent);
+  font-weight: 600;
+}
+
+/* --- External / source links in the report --- */
+.survey-ext-link {
+  color: #8ab4ff;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.survey-ext-link:hover,
+.survey-ext-link:focus-visible {
+  text-decoration: none;
+}
+.survey-cra-source {
+  font-size: 0.85rem;
+  color: var(--survey-muted);
+  margin: 0.5rem 0 0;
+}
+.survey-rec-docs {
+  font-size: 0.82rem;
+  color: var(--survey-muted);
+}
+.survey-roles-section {
+  margin-top: 1rem;
+}
+
+/* Explanation text under a cloud-platform hardening finding */
+.survey-addon-finding-note {
+  margin: 0.3rem 0 0.2rem;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: var(--survey-text);
+}
+
+/* --- Not-legal-advice disclaimer callout --- */
+.survey-disclaimer {
+  margin: 0 0 0.9rem;
+  padding: 0.5rem 0.75rem;
+  border-left: 3px solid var(--survey-warning);
+  border-radius: 4px;
+  background: rgba(210, 153, 34, 0.10);
+  color: var(--survey-text);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+.survey-result-hero-disclaimer {
+  margin-top: 0.6rem;
+}
+.survey-print-footer {
+  margin-top: 1.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--survey-border);
+  font-size: 0.8rem;
 }

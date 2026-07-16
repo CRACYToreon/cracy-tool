@@ -5,47 +5,115 @@
       "when": "answers.Q8a === \"yes\"",
       "summary": "Multiple roles / privilege levels",
       "controls": [
-        { "framework": "IEC_62443_4_2", "reference": "CR 2.1", "note": "Authorization enforcement" },
-        { "framework": "ISO_27002", "reference": "8.2", "note": "Privileged access rights" },
-        { "framework": "CC", "reference": "FMT_SMR", "note": "Security management roles" }
+        {
+          "framework": "IEC_62443_4_2",
+          "reference": "CR 2.1",
+          "note": "Authorization enforcement"
+        },
+        {
+          "framework": "ISO_27002",
+          "reference": "8.2",
+          "note": "Privileged access rights"
+        },
+        {
+          "framework": "CC",
+          "reference": "FMT_SMR",
+          "note": "Security management roles"
+        }
       ]
     },
     "Q8b": {
       "when": "answers.Q8b === \"yes\"",
       "summary": "Local credential storage",
       "controls": [
-        { "framework": "EN_303_645", "reference": "5.4-1 through 5.4-4", "note": "Credential storage and handling" },
-        { "framework": "NIST_63B", "reference": "§3.1.1", "note": "Hashing requirements (e.g. Argon2id)" },
-        { "framework": "IEC_62443_4_2", "reference": "CR 4.1", "note": "Information confidentiality" },
-        { "framework": "CC", "reference": "FCS_CKM", "note": "Cryptographic key management" }
+        {
+          "framework": "EN_303_645",
+          "reference": "5.4-1 through 5.4-4",
+          "note": "Credential storage and handling"
+        },
+        {
+          "framework": "NIST_63B",
+          "reference": "§3.1.1.2",
+          "note": "Hashing requirements (e.g. Argon2id)"
+        },
+        {
+          "framework": "IEC_62443_4_2",
+          "reference": "CR 4.1",
+          "note": "Information confidentiality"
+        },
+        {
+          "framework": "CC",
+          "reference": "FCS_CKM",
+          "note": "Cryptographic key management"
+        }
       ]
     },
     "Q8c": {
       "when": "answers.Q8c === \"yes\"",
       "summary": "Offline / fallback when remote IAM unavailable",
       "controls": [
-        { "framework": "EN_303_645", "reference": "5.9-1, 5.9-2", "note": "Resilience and local functionality during network loss" },
-        { "framework": "IEC_62443_4_2", "reference": "CR 7.3, CR 7.4", "note": "Backup and recovery" },
-        { "framework": "ISO_27002", "reference": "5.29", "note": "ICT readiness for business continuity" },
-        { "framework": "CC", "reference": "FRU_FLT", "note": "Fault tolerance" }
+        {
+          "framework": "EN_303_645",
+          "reference": "5.9-1, 5.9-2",
+          "note": "Resilience and local functionality during network loss"
+        },
+        {
+          "framework": "IEC_62443_4_2",
+          "reference": "CR 7.3, CR 7.4",
+          "note": "Backup and recovery"
+        },
+        {
+          "framework": "ISO_27002",
+          "reference": "5.29",
+          "note": "ICT readiness for business continuity"
+        },
+        {
+          "framework": "CC",
+          "reference": "FRU_FLT",
+          "note": "Fault tolerance"
+        }
       ]
     },
     "Q8d": {
       "when": "answers.Q8d === \"yes\"",
       "summary": "Authentication and access logging",
       "controls": [
-        { "framework": "IEC_62443_4_2", "reference": "CR 2.8–CR 2.11, CR 6.1, CR 6.2", "note": "Audit family and continuous monitoring" },
-        { "framework": "ISO_27002", "reference": "8.15, 8.16, 8.17", "note": "Logging, monitoring, clock sync" },
-        { "framework": "CC", "reference": "FAU class", "note": "Full security audit family" }
+        {
+          "framework": "IEC_62443_4_2",
+          "reference": "CR 2.8–CR 2.11, CR 6.1, CR 6.2",
+          "note": "Audit family and continuous monitoring"
+        },
+        {
+          "framework": "ISO_27002",
+          "reference": "8.15, 8.16, 8.17",
+          "note": "Logging, monitoring, clock sync"
+        },
+        {
+          "framework": "CC",
+          "reference": "FAU class",
+          "note": "Full security audit family"
+        }
       ]
     },
     "Q8e": {
       "when": "answers.Q8e === \"yes\"",
       "summary": "IAM component updatable independently of full firmware",
       "controls": [
-        { "framework": "EN_303_645", "reference": "5.3-1 through 5.3-12", "note": "Secure update provisions" },
-        { "framework": "IEC_62443_4_2", "reference": "EDR/HDR/NDR 3.10", "note": "Support for updates (component-type-specific)" },
-        { "framework": "CC", "reference": "FPT_TUD", "note": "Trusted update (typical mapping for update integrity)" }
+        {
+          "framework": "EN_303_645",
+          "reference": "5.3-1 through 5.3-12",
+          "note": "Secure update provisions"
+        },
+        {
+          "framework": "IEC_62443_4_2",
+          "reference": "EDR/HDR/NDR 3.10",
+          "note": "Support for updates (component-type-specific)"
+        },
+        {
+          "framework": "CC",
+          "reference": "FPT_TUD",
+          "note": "Trusted update (typical mapping for update integrity)"
+        }
       ]
     }
   }

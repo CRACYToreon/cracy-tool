@@ -1,0 +1,253 @@
+{
+  "id": "google-cip",
+  "label": "Google Cloud Identity Platform",
+  "note": "Google Cloud Identity Platform (the enterprise upgrade of Firebase Authentication). Supports SMS and TOTP as MFA second factors; email verification is required before MFA enrollment.",
+  "questions": [
+    {
+      "id": "GCIP_TIER",
+      "type": "single",
+      "label": "Product tier",
+      "text": "Is the project upgraded to Identity Platform, or running base Firebase Authentication?",
+      "options": [
+        {
+          "value": "cip",
+          "label": "Firebase Auth with Identity Platform (upgraded)"
+        },
+        {
+          "value": "firebase",
+          "label": "Base Firebase Authentication"
+        }
+      ],
+      "guidance": [
+        {
+          "when": {
+            "==": [
+              {
+                "var": "answers.GCIP_TIER"
+              },
+              "firebase"
+            ]
+          },
+          "severity": "warn",
+          "text": "**Review.** Base Firebase Authentication lacks MFA, blocking functions, user activity/audit logging, SAML/OIDC, and multi-tenancy. Upgrade to Firebase Auth with Identity Platform to access MFA and enterprise controls needed for the checks below."
+        },
+        {
+          "when": {
+            "==": [
+              {
+                "var": "answers.GCIP_TIER"
+              },
+              "cip"
+            ]
+          },
+          "severity": "ok",
+          "text": "**Good.** Identity Platform unlocks MFA, blocking functions, audit logging, and multi-tenancy."
+        }
+      ],
+      "cra": [
+        "2d"
+      ],
+      "stakeholders": {
+        "lead": "Cloud / IAM administrator",
+        "with": [
+          "Security architect",
+          "Developer"
+        ]
+      }
+    },
+    {
+      "id": "GCIP_MFA",
+      "type": "multi",
+      "label": "MFA second factors",
+      "text": "Which MFA second factors are enabled? (select all that apply)",
+      "options": [
+        {
+          "value": "totp",
+          "label": "Authenticator app (TOTP)"
+        },
+        {
+          "value": "sms",
+          "label": "SMS"
+        },
+        {
+          "value": "none",
+          "label": "None",
+          "exclusive": true
+        }
+      ],
+      "guidance": [
+        {
+          "when": {
+            "in": [
+              "totp",
+              {
+                "var": "answers.GCIP_MFA"
+              }
+            ]
+          },
+          "severity": "ok",
+          "text": "**Good.** TOTP is a solid second factor. Enforce email verification before enrollment (MFA requires a verified email) and encourage users to register a backup factor, since Identity Platform has no built-in second-factor recovery."
+        },
+        {
+          "when": {
+            "in": [
+              "sms",
+              {
+                "var": "answers.GCIP_MFA"
+              }
+            ]
+          },
+          "severity": "warn",
+          "text": "**Review.** SMS is exposed to SIM-swap; prefer TOTP where possible. Keep the fully-blocking SMS region policy and the reCAPTCHA verifier enabled to limit phone-auth abuse, and require verified emails before enrollment."
+        },
+        {
+          "when": true,
+          "severity": "gap",
+          "text": "**GAP.** Enable MFA (TOTP and/or SMS). Require verified emails first (MFA depends on it), and prompt users to register a backup factor, as there is no built-in recovery for a lost second factor."
+        }
+      ],
+      "cra": [
+        "2d"
+      ],
+      "stakeholders": {
+        "lead": "Cloud / IAM administrator",
+        "with": [
+          "Security architect",
+          "Developer"
+        ]
+      }
+    },
+    {
+      "id": "GCIP_PROTECT",
+      "type": "single",
+      "label": "Abuse / account protection",
+      "text": "Is bot and abuse protection (reCAPTCHA Enterprise) plus Google's compromised-account protection in use?",
+      "options": [
+        {
+          "value": "yes",
+          "label": "Yes, enabled"
+        },
+        {
+          "value": "partial",
+          "label": "Partially"
+        },
+        {
+          "value": "no",
+          "label": "No"
+        }
+      ],
+      "guidance": [
+        {
+          "when": {
+            "==": [
+              {
+                "var": "answers.GCIP_PROTECT"
+              },
+              "no"
+            ]
+          },
+          "severity": "gap",
+          "text": "**GAP.** Enable reCAPTCHA-based bot/abuse protection on sign-up and sign-in, and rely on Identity Platform's integration with Google's threat signals to detect compromised accounts. This is a core account-takeover defense."
+        },
+        {
+          "when": {
+            "==": [
+              {
+                "var": "answers.GCIP_PROTECT"
+              },
+              "partial"
+            ]
+          },
+          "severity": "warn",
+          "text": "**Review.** Extend protection to all auth entry points (sign-up, sign-in, password reset, phone verification) so attackers cannot target the least-protected flow."
+        },
+        {
+          "when": {
+            "==": [
+              {
+                "var": "answers.GCIP_PROTECT"
+              },
+              "yes"
+            ]
+          },
+          "severity": "ok",
+          "text": "**Good.** Bot/abuse and compromised-account protection are active. Monitor auth activity logs for anomalies."
+        }
+      ],
+      "cra": [
+        "2d",
+        "2l"
+      ],
+      "stakeholders": {
+        "lead": "Cloud / IAM administrator",
+        "with": [
+          "Security architect",
+          "Developer"
+        ]
+      }
+    },
+    {
+      "id": "GCIP_BLOCKING",
+      "type": "single",
+      "label": "Blocking functions",
+      "text": "Are blocking functions used to enforce policy at authentication events (e.g. email-domain restrictions, custom checks)?",
+      "options": [
+        {
+          "value": "yes",
+          "label": "Yes"
+        },
+        {
+          "value": "no",
+          "label": "No"
+        }
+      ],
+      "guidance": [
+        {
+          "when": {
+            "==": [
+              {
+                "var": "answers.GCIP_BLOCKING"
+              },
+              "yes"
+            ]
+          },
+          "severity": "ok",
+          "text": "**Good.** Blocking functions (beforeCreate / beforeSignIn) enforce policy server-side. Verify tokens server-side with the Admin SDK and validate issuer, audience, and expiry."
+        },
+        {
+          "when": true,
+          "severity": "info",
+          "text": "**Note.** Blocking functions (beforeCreate / beforeSignIn) let you enforce email verification, domain allowlists, and custom access rules that clients cannot bypass. Consider them for policy enforcement, and always verify tokens server-side with the Admin SDK."
+        }
+      ],
+      "cra": [
+        "2d"
+      ],
+      "stakeholders": {
+        "lead": "Cloud / IAM administrator",
+        "with": [
+          "Security architect",
+          "Developer"
+        ]
+      }
+    }
+  ],
+  "references": [
+    {
+      "label": "Identity Platform security overview (Google Cloud)",
+      "url": "https://cloud.google.com/security/products/identity-platform"
+    },
+    {
+      "label": "Add MFA to your web app (Identity Platform)",
+      "url": "https://cloud.google.com/identity-platform/docs/web/mfa"
+    },
+    {
+      "label": "Enable TOTP MFA (Identity Platform)",
+      "url": "https://cloud.google.com/identity-platform/docs/admin/enabling-totp-mfa"
+    },
+    {
+      "label": "Identity Platform multi-tenancy",
+      "url": "https://cloud.google.com/identity-platform/docs/multi-tenancy"
+    }
+  ]
+}

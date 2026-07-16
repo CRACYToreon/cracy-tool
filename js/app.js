@@ -5,7 +5,7 @@ import { createEngine } from "./survey-engine.js";
 import { render } from "./survey-renderer.js";
 import { buildRecommendations } from "./recommendations.js";
 import { buildAssembledReportHtml } from "./assemble-report.js";
-import { humanQuestionRef } from "./question-labels.js";
+import { humanQuestionRef, registerQuestionLabels } from "./question-labels.js";
 
 const jsonLogic = window.jsonLogic;
 
@@ -86,6 +86,15 @@ function fallbackLogic(expr, data) {
   if (op === "!=") return args != null && args.length >= 2 && fallbackLogic(args[0], data) !== fallbackLogic(args[1], data);
   if (op === "or") return Array.isArray(args) && args.some((a) => fallbackLogic(a, data));
   if (op === "all") return Array.isArray(args) && args.every((a) => fallbackLogic(a, data));
+  if (op === "and") return Array.isArray(args) && args.every((a) => fallbackLogic(a, data));
+  if (op === "in") {
+    if (!Array.isArray(args) || args.length < 2) return false;
+    const needle = fallbackLogic(args[0], data);
+    const haystack = fallbackLogic(args[1], data);
+    if (Array.isArray(haystack)) return haystack.includes(needle);
+    if (typeof haystack === "string") return needle != null && haystack.indexOf(needle) !== -1;
+    return false;
+  }
   return false;
 }
 
@@ -166,6 +175,7 @@ function buildAnswersExportPayload(engine, questions, session) {
     return {
       questionId: id,
       questionText: q ? plainQuestionText(q.text) : "",
+      suggestedStakeholders: q && q.stakeholders ? q.stakeholders : null,
       storedValue: answers[id],
       answerSummary: resolveAnswerSummary(q, answers[id]),
     };
@@ -185,10 +195,10 @@ function escHtmlAttr(str) {
 }
 
 /** Full HTML document for print/PDF (opened via print-report.html so the URL is not about:blank). */
-function buildReportPrintDocumentHtml(engine, session, mappingBundle) {
+function buildReportPrintDocumentHtml(engine, session, mappingBundle, platforms) {
   const fw = session.selectedFrameworks || [];
-  const rec = buildRecommendations(engine);
-  const assembled = buildAssembledReportHtml(engine, fw, mappingBundle);
+  const rec = buildRecommendations(engine, { platforms: platforms || [], applyLogic });
+  const assembled = buildAssembledReportHtml(engine, fw, mappingBundle, platforms || [], applyLogic);
   const baseHref = escHtmlAttr(new URL(".", window.location.href).href);
   const printCss =
     "html{box-sizing:border-box;background:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}" +
@@ -255,19 +265,21 @@ function buildReportPrintDocumentHtml(engine, session, mappingBundle) {
     "<!DOCTYPE html>\n<html lang=\"en\"><head><meta charset=\"utf-8\" />" +
     headAssets +
     '<meta name="viewport" content="width=device-width, initial-scale=1" />' +
-    "<title>CRA report</title></head><body class=\"survey-print-doc\">\n" +
-    "<header><h1>CRA questionnaire report</h1></header>\n" +
+    "<title>CRA Compliance assessment tool for identity, access control</title></head><body class=\"survey-print-doc\">\n" +
+    "<header><h1>CRA Compliance assessment tool for identity, access control</h1><p>CRA compliance report</p>" +
+    "<p class=\"survey-disclaimer\"><strong>Not legal advice.</strong> This report supports internal CRA readiness work only. It does not constitute legal advice or evidence of compliance.</p></header>\n" +
     "<main>" +
     rec +
     assembled +
     "</main>\n" +
+    "<footer class=\"survey-print-footer survey-disclaimer\">This report supports internal CRA readiness work only. It does not constitute legal advice or evidence of compliance.</footer>\n" +
     printRunner +
     "\n</body></html>"
   );
 }
 
-function openReportPrintOrPdf(engine, session, mappingBundle) {
-  const html = buildReportPrintDocumentHtml(engine, session, mappingBundle);
+function openReportPrintOrPdf(engine, session, mappingBundle, platforms) {
+  const html = buildReportPrintDocumentHtml(engine, session, mappingBundle, platforms);
   try {
     sessionStorage.setItem("craPrintReportHtml", html);
   } catch (e) {
@@ -338,28 +350,37 @@ function updateSummary(engine, questions) {
   summaryBody.innerHTML = html;
 }
 
-function updateProgress(engine, totalQuestions, isSurveyEnded) {
-  const total = totalQuestions;
-  const answered = Object.keys(engine.answers).length;
+function updateProgress(engine, isSurveyEnded, session) {
+  const visibleAll = (engine.getVisibleQuestions && engine.getVisibleQuestions()) || [];
+  const visible = visibleAll.filter((q) => q.type !== "message");
   const complete = isSurveyEnded === true || (engine.allApplicableAnswered && engine.allApplicableAnswered());
-  if (total === 0) {
+  if (visible.length === 0) {
     progressEl.innerHTML = "";
     progressEl.hidden = true;
     return;
   }
+  const answered = visible.filter((q) => {
+    const v = engine.answers[q.id];
+    return q.type === "multi" ? Array.isArray(v) : v !== undefined && v !== "";
+  }).length;
+  let pct = complete ? 100 : Math.round((answered / visible.length) * 100);
+  // Monotonic: only move forward. New branches unlocking (e.g. picking platforms)
+  // grow the visible set, which would otherwise make the bar jump backward.
+  if (session) {
+    pct = Math.max(session.progressMax || 0, pct);
+    if (complete) pct = 100;
+    session.progressMax = pct;
+  }
   progressEl.hidden = false;
-  const pct = complete ? 100 : (total ? Math.min(100, Math.round((answered / total) * 100)) : 0);
-  const labelHtml = complete ? "" : `<span class="progress__label">${answered} of ${total} questions</span>`;
   progressEl.innerHTML =
-    labelHtml +
-    `<div class="progress__bar" role="progressbar" aria-valuenow="${complete ? total : answered}" aria-valuemin="0" aria-valuemax="${total}">` +
+    `<div class="progress__bar" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100" aria-label="Questionnaire progress">` +
     `<div class="progress__fill" style="width:${pct}%"></div></div>`;
 }
 
 function refreshUi(engine, totalQuestions, isSurveyEnded, questions, session) {
   if (isSurveyEnded === undefined) isSurveyEnded = false;
   updateSummary(engine, questions || []);
-  updateProgress(engine, totalQuestions, isSurveyEnded);
+  updateProgress(engine, isSurveyEnded, session);
   const prevBtn = document.getElementById("btn-previous");
   if (prevBtn) prevBtn.disabled = !canGoPrevious(engine);
   const reportReady = isReportExportReady(session);
@@ -373,6 +394,78 @@ function refreshUi(engine, totalQuestions, isSurveyEnded, questions, session) {
   const printBtn = document.getElementById("btn-print-report");
   if (copyBtn) copyBtn.disabled = !reportReady;
   if (printBtn) printBtn.disabled = !reportReady;
+}
+
+/** Load cloud IAM platform modules listed in the manifest. Returns [] on any failure. */
+async function loadPlatformModules() {
+  try {
+    const res = await fetch("data/platforms/manifest.json");
+    if (!res.ok) return [];
+    const manifest = await res.json();
+    const files = (manifest.platforms || []).map((p) => p && p.file).filter(Boolean);
+    const mods = [];
+    for (const file of files) {
+      try {
+        const r = await fetch("data/platforms/" + file);
+        if (!r.ok) {
+          console.warn("Platform load failed:", file, r.statusText);
+          continue;
+        }
+        const mod = await r.json();
+        if (mod && mod.id && Array.isArray(mod.questions)) mods.push(mod);
+      } catch (e) {
+        console.warn("Platform load error:", file, e);
+      }
+    }
+    return mods;
+  } catch (e) {
+    console.warn("Platform manifest load failed:", e);
+    return [];
+  }
+}
+
+/**
+ * Merge platform modules into the core question list:
+ * - populate the PLATFORMS selector options from the loaded modules
+ * - inject each platform question before END, gated on its platform being selected
+ * If no platforms load, the PLATFORMS selector is removed so the survey still completes.
+ */
+function integratePlatforms(questions, platforms) {
+  if (!Array.isArray(platforms) || platforms.length === 0) {
+    return questions.filter((q) => q.id !== "PLATFORMS");
+  }
+  const out = [];
+  for (const q of questions) {
+    if (q.id === "PLATFORMS") {
+      const opts = platforms.map((p) => ({ value: p.id, label: p.label || p.id }));
+      opts.push({ value: "other", label: "Another platform / not listed" });
+      out.push({ ...q, options: opts });
+    } else if (q.id === "END") {
+      for (const p of platforms) {
+        const gate = { in: [p.id, { var: "answers.PLATFORMS" }] };
+        for (const pq of p.questions) {
+          const injected = { ...pq };
+          injected.showIf = pq.showIf ? { and: [gate, pq.showIf] } : gate;
+          out.push(injected);
+        }
+      }
+      out.push(q);
+    } else {
+      out.push(q);
+    }
+  }
+  return out;
+}
+
+/** Register human-readable summary labels for every platform question id. */
+function registerPlatformLabels(platforms) {
+  const map = {};
+  for (const p of platforms || []) {
+    for (const q of p.questions || []) {
+      map[q.id] = (p.label ? p.label + " - " : "") + (q.label || q.id);
+    }
+  }
+  registerQuestionLabels(map);
 }
 
 async function loadMappingBundle() {
@@ -429,20 +522,22 @@ async function init() {
     };
   }
 
-  const questions = data.questions || [];
+  const platformModules = await loadPlatformModules();
+  const questions = integratePlatforms(data.questions || [], platformModules);
+  registerPlatformLabels(platformModules);
   const totalQuestions = questions.filter((q) => q.type === "single" || q.type === "multi").length;
   const engine = createEngine(questions, applyLogic);
 
-  const session = { phase: "frameworks", selectedFrameworks: [] };
+  const session = { phase: "frameworks", selectedFrameworks: [], progressMax: 0 };
 
   function doRender() {
     surveyRenderApi = render(container, engine, {
       onEnd: (state) => refreshUi(engine, totalQuestions, state.ended, questions, session),
       onUpdate: (opts) => refreshUi(engine, totalQuestions, opts && opts.surveyComplete, questions, session),
-      getRecommendations: (eng) => buildRecommendations(eng),
+      getRecommendations: (eng) => buildRecommendations(eng, { platforms: platformModules, applyLogic }),
       session,
       postSurveyConfig,
-      buildAssembledReport: (eng, keys) => buildAssembledReportHtml(eng, keys, mappingBundle),
+      buildAssembledReport: (eng, keys) => buildAssembledReportHtml(eng, keys, mappingBundle, platformModules, applyLogic),
     });
   }
 
@@ -494,7 +589,7 @@ async function init() {
 
   document.getElementById("btn-print-report").addEventListener("click", () => {
     if (!isReportExportReady(session)) return;
-    openReportPrintOrPdf(engine, session, mappingBundle);
+    openReportPrintOrPdf(engine, session, mappingBundle, platformModules);
   });
 
   document.getElementById("btn-previous").addEventListener("click", () => {
@@ -512,6 +607,7 @@ async function init() {
     engine.reset();
     session.phase = "frameworks";
     session.selectedFrameworks = [];
+    session.progressMax = 0;
     doRender();
     refreshUi(engine, totalQuestions, false, questions, session);
   });

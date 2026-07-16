@@ -1,0 +1,11 @@
+{
+  "description": "Registry of cloud IAM platform modules. Each entry points to a platform file under data/platforms/. To add a platform, create its file and add one entry here. The loader reads each file's id and label to build the PLATFORMS selector, injects platform gating into every question, and appends the questions before the END message. Per-answer guidance lives inside each platform file.",
+  "platforms": [
+    { "file": "entra.json" },
+    { "file": "cognito.json" },
+    { "file": "auth0.json" },
+    { "file": "google-cip.json" },
+    { "file": "okta.json" },
+    { "file": "keycloak.json" }
+  ]
+}

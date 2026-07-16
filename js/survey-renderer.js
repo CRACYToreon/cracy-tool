@@ -112,6 +112,11 @@ export function render(container, engine, callbacks = {}) {
         heroTitle.className = "survey-result-hero-title";
         heroTitle.textContent = "Your assessment report";
         hero.appendChild(heroTitle);
+        const disclaimer = document.createElement("p");
+        disclaimer.className = "survey-disclaimer survey-result-hero-disclaimer";
+        disclaimer.innerHTML =
+          "<strong>Not legal advice.</strong> This report supports internal CRA readiness work only. It does not constitute legal advice or evidence of compliance.";
+        hero.appendChild(disclaimer);
         const intro = document.createElement("p");
         intro.className = "survey-result-hero-lead";
         intro.textContent =
@@ -165,6 +170,27 @@ export function render(container, engine, callbacks = {}) {
       return;
     }
 
+    const sh = q.stakeholders;
+    if (sh && sh.lead) {
+      const badge = document.createElement("div");
+      badge.className = "survey-question-role";
+      const rl = document.createElement("span");
+      rl.className = "survey-question-role__label";
+      rl.textContent = "Best discussed with";
+      const rv = document.createElement("span");
+      rv.className = "survey-question-role__value";
+      const lead = document.createElement("span");
+      lead.className = "survey-question-role__lead";
+      lead.textContent = sh.lead + " (lead)";
+      rv.appendChild(lead);
+      const others = Array.isArray(sh.with) ? sh.with : [];
+      if (others.length) {
+        rv.appendChild(document.createTextNode(", " + others.join(", ")));
+      }
+      badge.appendChild(rl);
+      badge.appendChild(rv);
+      el.appendChild(badge);
+    }
     el.appendChild(label);
 
     const answer = engine.answers[q.id];
@@ -204,8 +230,16 @@ export function render(container, engine, callbacks = {}) {
         input.value = opt.value;
         if (selected.includes(opt.value)) input.checked = true;
         input.addEventListener("change", () => {
-          const next = selected.filter((v) => v !== opt.value);
+          let next = selected.filter((v) => v !== opt.value);
           if (input.checked) next.push(opt.value);
+          if (input.checked && opt.exclusive) {
+            // An exclusive option (e.g. "None") clears everything else.
+            next = [opt.value];
+          } else if (input.checked && !opt.exclusive) {
+            // Selecting a normal option clears any exclusive option.
+            const exclusiveVals = options.filter((o) => o.exclusive).map((o) => o.value);
+            next = next.filter((v) => !exclusiveVals.includes(v));
+          }
           engine.setMultiAnswer(q.id, next);
           renderToDom();
         });

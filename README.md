@@ -1,6 +1,6 @@
-# CRA survey – modular questionnaire
+# CRA Compliance assessment tool for identity, access control
 
-Simple modular survey webapp: declarative JSON (id, type, text, options, showIf, next/end) + JSON-Logic for visibility + minimal engine and renderer.
+Modular survey webapp that assesses a product's identity and access management choices against the EU Cyber Resilience Act (CRA) and maps answers to CRA Annex I requirements and reference frameworks. Declarative JSON (id, type, text, options, role, showIf, next/end) + JSON-Logic for visibility + minimal engine and renderer.
 
 ## Structure
 

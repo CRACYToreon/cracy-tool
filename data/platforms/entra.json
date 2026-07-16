@@ -1,0 +1,319 @@
+{
+  "id": "entra",
+  "label": "Microsoft Entra External ID",
+  "note": "Microsoft's customer identity and access management (CIAM) platform, generally available since May 2024. Replaces the legacy Azure AD B2C product.",
+  "questions": [
+    {
+      "id": "ENTRA_MFA",
+      "type": "multi",
+      "label": "MFA methods",
+      "text": "Which MFA (second-factor) methods are enabled and enforced for external users? (select all that apply)",
+      "options": [
+        {
+          "value": "passkey",
+          "label": "Passkey (FIDO2) / phishing-resistant"
+        },
+        {
+          "value": "authenticator",
+          "label": "Microsoft Authenticator (push / passwordless)"
+        },
+        {
+          "value": "totp",
+          "label": "Authenticator app OTP (TOTP)"
+        },
+        {
+          "value": "sms",
+          "label": "SMS / phone"
+        },
+        {
+          "value": "email_otp",
+          "label": "Email one-time passcode"
+        },
+        {
+          "value": "none",
+          "label": "None / MFA optional",
+          "exclusive": true
+        }
+      ],
+      "guidance": [
+        {
+          "when": {
+            "in": [
+              "passkey",
+              {
+                "var": "answers.ENTRA_MFA"
+              }
+            ]
+          },
+          "severity": "ok",
+          "text": "**Strong posture.** A phishing-resistant method (passkey/FIDO2) is enabled. Enforce it for external users with a Conditional Access authentication-strength policy."
+        },
+        {
+          "when": {
+            "in": [
+              "authenticator",
+              {
+                "var": "answers.ENTRA_MFA"
+              }
+            ]
+          },
+          "severity": "ok",
+          "text": "**Good.** Microsoft Authenticator meets NIST AAL2 and beats SMS. For higher-assurance actions, add a passkey (FIDO2) authentication-strength requirement."
+        },
+        {
+          "when": {
+            "in": [
+              "totp",
+              {
+                "var": "answers.ENTRA_MFA"
+              }
+            ]
+          },
+          "severity": "warn",
+          "text": "**Review.** TOTP is an acceptable second factor but not phishing-resistant. Prefer Microsoft Authenticator or passkeys (FIDO2) for sensitive access."
+        },
+        {
+          "when": {
+            "in": [
+              "sms",
+              {
+                "var": "answers.ENTRA_MFA"
+              }
+            ]
+          },
+          "severity": "warn",
+          "text": "**Review.** SMS is not phishing-resistant and is exposed to SIM-swap. Microsoft recommends moving users to Authenticator or passkeys and blocking the weakest methods."
+        },
+        {
+          "when": {
+            "in": [
+              "email_otp",
+              {
+                "var": "answers.ENTRA_MFA"
+              }
+            ]
+          },
+          "severity": "warn",
+          "text": "**Review.** Email OTP is an acceptable baseline for external users but not phishing-resistant. Offer passkeys (FIDO2) for higher-assurance users and actions."
+        },
+        {
+          "when": true,
+          "severity": "gap",
+          "text": "**GAP.** MFA is optional or absent. Enforce MFA for all external users via a Conditional Access policy; without it, accounts are exposed to credential-stuffing and account-takeover. Baseline control."
+        }
+      ],
+      "cra": [
+        "2d"
+      ],
+      "stakeholders": {
+        "lead": "Cloud / IAM administrator",
+        "with": [
+          "Security architect",
+          "Developer"
+        ]
+      }
+    },
+    {
+      "id": "ENTRA_CA",
+      "type": "single",
+      "label": "Conditional Access",
+      "text": "Are Conditional Access policies applied to external users?\n(For example, to enforce MFA or restrict access by location.)",
+      "options": [
+        {
+          "value": "yes",
+          "label": "Yes"
+        },
+        {
+          "value": "no",
+          "label": "No"
+        }
+      ],
+      "guidance": [
+        {
+          "when": {
+            "==": [
+              {
+                "var": "answers.ENTRA_CA"
+              },
+              "no"
+            ]
+          },
+          "severity": "gap",
+          "text": "**GAP.** Create Conditional Access policies for external users: (1) require MFA on sign-up and sign-in; (2) enforce a phishing-resistant authentication strength (passkey/FIDO2 or Microsoft Authenticator) for sensitive access; (3) block legacy authentication; (4) optionally restrict by named location and sign-in risk. Conditional Access is the enforcement mechanism for MFA and step-up in external tenants. Exclude break-glass/emergency-access accounts to avoid lockout, and validate in report-only mode before enforcing."
+        },
+        {
+          "when": {
+            "==": [
+              {
+                "var": "answers.ENTRA_CA"
+              },
+              "yes"
+            ]
+          },
+          "severity": "ok",
+          "text": "**Good.** Conditional Access is applied. Confirm scope covers all external-facing apps and the sign-up/sign-in user flows; require a phishing-resistant authentication strength for sensitive access; block legacy authentication; exclude emergency-access accounts; and consider sign-in risk and named-location conditions. Test changes in report-only mode first."
+        }
+      ],
+      "cra": [
+        "2d"
+      ],
+      "references": [
+        {
+          "label": "Conditional Access overview (Microsoft Learn)",
+          "url": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/overview"
+        },
+        {
+          "label": "Conditional Access for external tenants",
+          "url": "https://learn.microsoft.com/en-us/entra/external-id/authentication-conditional-access"
+        },
+        {
+          "label": "Require MFA authentication strength",
+          "url": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/policy-all-users-mfa-strength"
+        }
+      ],
+      "stakeholders": {
+        "lead": "Cloud / IAM administrator",
+        "with": [
+          "Security architect",
+          "Developer"
+        ]
+      }
+    },
+    {
+      "id": "ENTRA_SECRETS",
+      "type": "single",
+      "label": "App secrets & certificates",
+      "text": "How are application secrets and signing certificates managed for apps registered in the tenant?",
+      "options": [
+        {
+          "value": "certs_rotated",
+          "label": "Certificates, rotated"
+        },
+        {
+          "value": "keyvault_rotated",
+          "label": "Key Vault, short-lived, rotated"
+        },
+        {
+          "value": "longlived",
+          "label": "Long-lived client secrets"
+        },
+        {
+          "value": "unmanaged",
+          "label": "Not formally managed / unknown"
+        }
+      ],
+      "guidance": [
+        {
+          "when": {
+            "==": [
+              {
+                "var": "answers.ENTRA_SECRETS"
+              },
+              "longlived"
+            ]
+          },
+          "severity": "gap",
+          "text": "**GAP.** Move to X.509 certificate credentials in preference to client secrets. Where secrets are unavoidable, set short expirations, store them in Key Vault, rotate, and audit. Public client apps should carry no credentials at all. Supports Annex I 2(e)."
+        },
+        {
+          "when": {
+            "==": [
+              {
+                "var": "answers.ENTRA_SECRETS"
+              },
+              "unmanaged"
+            ]
+          },
+          "severity": "gap",
+          "text": "**GAP.** Application credentials are not formally managed. Inventory all app registrations, replace long-lived client secrets with certificate credentials, store secrets in Key Vault, and set rotation and expiry."
+        },
+        {
+          "when": true,
+          "severity": "ok",
+          "text": "**Good posture.** Rotated certificates or Key Vault-managed short-lived secrets. Confirm rotation is automated and monitored."
+        }
+      ],
+      "cra": [
+        "2e"
+      ],
+      "stakeholders": {
+        "lead": "Cloud / IAM administrator",
+        "with": [
+          "Security architect",
+          "Developer"
+        ]
+      }
+    },
+    {
+      "id": "ENTRA_SESSION",
+      "type": "single",
+      "label": "Session lifetimes",
+      "text": "How are session lifetimes configured?",
+      "options": [
+        {
+          "value": "shortened",
+          "label": "Shortened"
+        },
+        {
+          "value": "defaults",
+          "label": "Microsoft defaults"
+        },
+        {
+          "value": "extended",
+          "label": "Extended / long-lived"
+        }
+      ],
+      "guidance": [
+        {
+          "when": {
+            "==": [
+              {
+                "var": "answers.ENTRA_SESSION"
+              },
+              "shortened"
+            ]
+          },
+          "severity": "ok",
+          "text": "**Good posture.** Confirm the sign-in frequency is proportionate to the product's sensitivity (Question 6 risk level)."
+        },
+        {
+          "when": true,
+          "severity": "warn",
+          "text": "**Review.** Tighten the session sign-in frequency via Conditional Access, in line with the product's risk level from Question 6. Avoid excessively frequent reauthentication, which trains users to approve prompts without scrutiny."
+        }
+      ],
+      "cra": [
+        "2d"
+      ],
+      "stakeholders": {
+        "lead": "Cloud / IAM administrator",
+        "with": [
+          "Security architect",
+          "Developer"
+        ]
+      }
+    }
+  ],
+  "references": [
+    {
+      "label": "Require MFA with Conditional Access (Microsoft Learn)",
+      "url": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/policy-all-users-mfa-strength"
+    },
+    {
+      "label": "Conditional Access overview (Microsoft Learn)",
+      "url": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/overview"
+    },
+    {
+      "label": "Authentication & Conditional Access for external users",
+      "url": "https://learn.microsoft.com/en-us/entra/external-id/authentication-conditional-access"
+    },
+    {
+      "label": "Authentication strength for external users",
+      "url": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/policy-guests-mfa-strength"
+    },
+    {
+      "label": "MFA deployment considerations (method strength)",
+      "url": "https://learn.microsoft.com/en-us/entra/identity/authentication/howto-mfa-getstarted"
+    }
+  ]
+}

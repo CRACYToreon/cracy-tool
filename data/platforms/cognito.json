@@ -1,0 +1,294 @@
+{
+  "id": "cognito",
+  "label": "AWS Cognito",
+  "note": "Amazon Cognito user pools provide CIAM (sign-up, sign-in, MFA, token issuance). Guidance below applies to local user-pool users; federated users are secured by their upstream IdP.",
+  "questions": [
+    {
+      "id": "COGNITO_MFA",
+      "type": "multi",
+      "label": "MFA methods",
+      "text": "Which MFA methods are enabled for user-pool sign-in, and is MFA required? (select all that apply)",
+      "options": [
+        {
+          "value": "passkey",
+          "label": "WebAuthn passkeys (passwordless)"
+        },
+        {
+          "value": "totp",
+          "label": "Authenticator app (TOTP)"
+        },
+        {
+          "value": "sms",
+          "label": "SMS"
+        },
+        {
+          "value": "email",
+          "label": "Email OTP"
+        },
+        {
+          "value": "none",
+          "label": "MFA off or optional",
+          "exclusive": true
+        }
+      ],
+      "guidance": [
+        {
+          "when": {
+            "in": [
+              "passkey",
+              {
+                "var": "answers.COGNITO_MFA"
+              }
+            ]
+          },
+          "severity": "ok",
+          "text": "**Strong posture.** WebAuthn passkeys are phishing-resistant. Ensure the user pool MFA setting is Required (not Optional), since optional MFA sees near-zero adoption."
+        },
+        {
+          "when": {
+            "in": [
+              "totp",
+              {
+                "var": "answers.COGNITO_MFA"
+              }
+            ]
+          },
+          "severity": "ok",
+          "text": "**Good.** TOTP (authenticator app) is a solid second factor. Set MFA to Required for pools handling sensitive data, and consider adding WebAuthn passkeys for phishing resistance."
+        },
+        {
+          "when": {
+            "in": [
+              "sms",
+              {
+                "var": "answers.COGNITO_MFA"
+              }
+            ]
+          },
+          "severity": "warn",
+          "text": "**Review.** SMS is exposed to SIM-swap and SMS-pumping/toll-fraud. Prefer TOTP or WebAuthn passkeys, and attach an AWS WAF web ACL to curb SMS abuse and bot traffic."
+        },
+        {
+          "when": {
+            "in": [
+              "email",
+              {
+                "var": "answers.COGNITO_MFA"
+              }
+            ]
+          },
+          "severity": "warn",
+          "text": "**Review.** Email OTP (Essentials/Plus tiers) is an acceptable baseline but not phishing-resistant. Add TOTP or WebAuthn passkeys for higher-assurance access."
+        },
+        {
+          "when": true,
+          "severity": "gap",
+          "text": "**GAP.** MFA is off or optional. Set MFA to Required (set-user-pool-mfa-config with MFA ON) for pools handling sensitive data. Optional MFA results in near-zero adoption."
+        }
+      ],
+      "cra": [
+        "2d"
+      ],
+      "stakeholders": {
+        "lead": "Cloud / IAM administrator",
+        "with": [
+          "Security architect",
+          "Developer"
+        ]
+      }
+    },
+    {
+      "id": "COGNITO_THREAT",
+      "type": "single",
+      "label": "Threat protection",
+      "text": "Is Cognito threat protection enabled (adaptive/risk-based auth plus compromised-credential detection), and in which mode?",
+      "options": [
+        {
+          "value": "full",
+          "label": "Enabled, Full-function (blocks / challenges risky sign-ins)"
+        },
+        {
+          "value": "audit",
+          "label": "Enabled, Audit-only (logs risk, no action)"
+        },
+        {
+          "value": "off",
+          "label": "Off"
+        }
+      ],
+      "guidance": [
+        {
+          "when": {
+            "==": [
+              {
+                "var": "answers.COGNITO_THREAT"
+              },
+              "off"
+            ]
+          },
+          "severity": "gap",
+          "text": "**GAP.** Enable threat protection (Plus feature plan). It adds adaptive risk-based MFA and blocks sign-ins using credentials found in known breaches, both major account-takeover defenses."
+        },
+        {
+          "when": {
+            "==": [
+              {
+                "var": "answers.COGNITO_THREAT"
+              },
+              "audit"
+            ]
+          },
+          "severity": "warn",
+          "text": "**Review.** Audit-only logs risk but takes no action. AWS recommends a short tuning period, then switching to Full-function so compromised-credential and high-risk sign-ins are actually blocked or challenged."
+        },
+        {
+          "when": {
+            "==": [
+              {
+                "var": "answers.COGNITO_THREAT"
+              },
+              "full"
+            ]
+          },
+          "severity": "ok",
+          "text": "**Good.** Full-function threat protection is active. Keep exporting threat logs to CloudWatch Logs / S3 / Firehose for monitoring, and provide user event feedback to tune risk scoring."
+        }
+      ],
+      "cra": [
+        "2d",
+        "2l"
+      ],
+      "stakeholders": {
+        "lead": "Cloud / IAM administrator",
+        "with": [
+          "Security architect",
+          "Developer"
+        ]
+      }
+    },
+    {
+      "id": "COGNITO_AUTHFLOW",
+      "type": "single",
+      "label": "Authentication flow",
+      "text": "Which primary authentication flow do the app clients use?",
+      "options": [
+        {
+          "value": "srp",
+          "label": "SRP (USER_SRP_AUTH) - password never sent"
+        },
+        {
+          "value": "passwordless",
+          "label": "Passwordless (WebAuthn / OTP)"
+        },
+        {
+          "value": "user_password",
+          "label": "USER_PASSWORD_AUTH / ADMIN_USER_PASSWORD_AUTH"
+        }
+      ],
+      "guidance": [
+        {
+          "when": {
+            "==": [
+              {
+                "var": "answers.COGNITO_AUTHFLOW"
+              },
+              "user_password"
+            ]
+          },
+          "severity": "warn",
+          "text": "**Review.** USER_PASSWORD_AUTH sends the raw password to the Cognito API rather than using SRP. Switch app clients to ALLOW_USER_SRP_AUTH so passwords are not transmitted in the clear at the application layer."
+        },
+        {
+          "when": true,
+          "severity": "ok",
+          "text": "**Good.** SRP or passwordless avoids transmitting raw passwords. Keep public client apps free of embedded credentials."
+        }
+      ],
+      "cra": [
+        "2e"
+      ],
+      "stakeholders": {
+        "lead": "Cloud / IAM administrator",
+        "with": [
+          "Security architect",
+          "Developer"
+        ]
+      }
+    },
+    {
+      "id": "COGNITO_CLIENT",
+      "type": "single",
+      "label": "App client credentials",
+      "text": "How are app client credentials handled for public (browser / mobile) clients?",
+      "options": [
+        {
+          "value": "pkce",
+          "label": "Public client, no secret, PKCE enabled"
+        },
+        {
+          "value": "backend",
+          "label": "Confidential client, secret kept server-side only"
+        },
+        {
+          "value": "secret_in_app",
+          "label": "Client secret embedded in the app"
+        }
+      ],
+      "guidance": [
+        {
+          "when": {
+            "==": [
+              {
+                "var": "answers.COGNITO_CLIENT"
+              },
+              "secret_in_app"
+            ]
+          },
+          "severity": "gap",
+          "text": "**GAP.** Never embed a client secret in a public browser or mobile app; it cannot be kept confidential. Use a public client with PKCE, or keep the confidential client behind your backend. Do not place passwords, hashes, or AWS credentials in client-side storage."
+        },
+        {
+          "when": {
+            "==": [
+              {
+                "var": "answers.COGNITO_CLIENT"
+              },
+              "pkce"
+            ]
+          },
+          "severity": "ok",
+          "text": "**Good.** Public clients should use PKCE (OAuth authorization-code grant) and carry no secret. Generate a fresh code verifier per request."
+        },
+        {
+          "when": true,
+          "severity": "ok",
+          "text": "**Good.** A confidential client is acceptable provided the secret stays server-side only."
+        }
+      ],
+      "cra": [
+        "2e"
+      ],
+      "stakeholders": {
+        "lead": "Cloud / IAM administrator",
+        "with": [
+          "Security architect",
+          "Developer"
+        ]
+      }
+    }
+  ],
+  "references": [
+    {
+      "label": "Security best practices for Cognito user pools (AWS docs)",
+      "url": "https://docs.aws.amazon.com/cognito/latest/developerguide/user-pool-security-best-practices.html"
+    },
+    {
+      "label": "Threat protection (adaptive auth, compromised credentials)",
+      "url": "https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pool-settings-threat-protection.html"
+    },
+    {
+      "label": "Using Cognito user pool security features",
+      "url": "https://docs.aws.amazon.com/cognito/latest/developerguide/managing-security.html"
+    }
+  ]
+}

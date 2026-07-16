@@ -3,8 +3,9 @@
  */
 
 import { humanQuestionRef } from "./question-labels.js";
+import { computePlatformFindings, selectedUnknownPlatforms } from "./platform-findings.js";
 
-export function buildRecommendations(engine) {
+export function buildRecommendations(engine, ctx = {}) {
   const a = engine.answers || {};
   const sections = [];
 
@@ -40,7 +41,9 @@ export function buildRecommendations(engine) {
     } else if (scope === "partial") {
       sections.push({
         title: "Architecture",
-        text: "Architecture B-HYBRID. The manufacturer's own orchestration layer is in full CRA scope; the underlying third-party IdP is covered by Art. 13(5) due diligence.",
+        text: arch === "hybrid"
+          ? "Architecture A+B (derived profile A_B). The manufacturer's own orchestration layer over the third-party IdP is in full CRA scope; the underlying IdP is covered by Art. 13(5) due diligence."
+          : "Architecture B-HYBRID. The manufacturer's own orchestration layer is in full CRA scope; the underlying third-party IdP is covered by Art. 13(5) due diligence.",
       });
     }
   } else if (arch === "customer") {
@@ -91,7 +94,7 @@ export function buildRecommendations(engine) {
     {
       id: "Q8d",
       yes: "**Audit:** Verify completeness per 2(l): authentication attempts, access decisions, credential/config changes. User opt-out. Tamper protection on logs.",
-      no: "**GAP.** Violates 2(d) and 2(l). Must implement logging before Dec 2027.",
+      no: "**GAP.** Violates 2(d) and 2(l). Must implement logging before the CRA's main obligations apply (December 2027).",
     },
     {
       id: "Q8e",
@@ -109,6 +112,54 @@ export function buildRecommendations(engine) {
       });
     }
   });
+
+  // Platform-specific guidance: resolved via the shared findings helper so the
+  // narrative and the CRA report agree. Grouped by platform, references once per platform.
+  const platforms = Array.isArray(ctx.platforms) ? ctx.platforms : [];
+  const findings = computePlatformFindings(a, platforms, ctx.applyLogic);
+
+  for (const p of platforms) {
+    const pf = findings.filter((f) => f.platformId === p.id);
+    if (pf.length === 0) continue;
+    for (const f of pf) {
+      let text = f.text;
+      if (Array.isArray(f.questionReferences) && f.questionReferences.length) {
+        const docs = f.questionReferences
+          .filter((r) => r && r.url)
+          .map((r) => `<a class="survey-ext-link" href="${escapeHtmlAttr(r.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(r.label || r.url)}</a>`)
+          .join(" &middot; ");
+        if (docs) text += `<br><span class="survey-rec-docs">Docs: ${docs}</span>`;
+      }
+      sections.push({ title: p.label + " - " + f.questionLabel, text });
+    }
+    if (Array.isArray(p.references) && p.references.length) {
+      const links = p.references
+        .filter((r) => r && r.url)
+        .map((r) => `<a class="survey-ext-link" href="${escapeHtmlAttr(r.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(r.label || r.url)}</a>`)
+        .join(" &middot; ");
+      if (links) sections.push({ title: (p.label || p.id) + " - References", text: links });
+    }
+  }
+
+  // Fallback note when the product is remote/hybrid but no built-in platform was assessed.
+  const cloudArch = a.Q4 === "remote" || a.Q4 === "hybrid";
+  if (cloudArch && Array.isArray(a.PLATFORMS)) {
+    const unknown = selectedUnknownPlatforms(a, platforms);
+    if (findings.length === 0) {
+      sections.push({
+        title: "Cloud platform",
+        text:
+          a.PLATFORMS.length === 0
+            ? "**No cloud platform selected.** You indicated remote or hybrid IAM but selected no platform, so platform-specific checks were skipped. Apply the baseline regardless: enforce MFA (prefer phishing-resistant), risk-based/adaptive protection, secure secret handling, and proportionate session lifetimes, plus Art. 13(5) supplier due diligence."
+            : "**Unlisted platform.** The selected platform is not in the built-in catalogue, so no platform-specific checks ran. Apply the same baseline: enforce MFA (prefer phishing-resistant), risk-based protection, secure client-secret handling, and proportionate session lifetimes, plus Art. 13(5) supplier due diligence.",
+      });
+    } else if (unknown.length) {
+      sections.push({
+        title: "Cloud platform - additional",
+        text: "**Unlisted platform also selected.** One or more selected platforms are not in the built-in catalogue and were not assessed. Apply the same baseline controls and Art. 13(5) due diligence to them.",
+      });
+    }
+  }
 
   if (sections.length === 0) {
     return "<p>No recommendations (answers may not have reached IAM architecture questions).</p>";
@@ -134,6 +185,14 @@ function escapeHtml(str) {
   const div = document.createElement("div");
   div.textContent = str;
   return div.innerHTML;
+}
+
+function escapeHtmlAttr(str) {
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
 }
 
 function formatInline(text) {

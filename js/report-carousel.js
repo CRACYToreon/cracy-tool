@@ -38,8 +38,7 @@ function collectSlideNodes(pageEl) {
           cardsRoot.querySelectorAll(":scope > .survey-cra-card").forEach((card) => nodes.push(card));
         }
       }
-      const addon = main.querySelector(".survey-addon-section");
-      if (addon) nodes.push(addon);
+      main.querySelectorAll(".survey-addon-section").forEach((addon) => nodes.push(addon));
     }
   }
 

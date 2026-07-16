@@ -15,18 +15,47 @@
           "end": true,
           "finalMessage": "This questionnaire covers IAM-related CRA requirements. If your product has no authentication or authorisation functions, these questions do not apply. Assess other CRA Annex I requirements separately."
         }
-      ]
+      ],
+      "stakeholders": {
+        "lead": "Product owner",
+        "with": [
+          "Security architect"
+        ]
+      }
     },
     {
       "id": "Q2",
       "type": "single",
       "text": "Does the PDE implement authentication on ALL interfaces?\nFor each interface: is there a mechanism that verifies the identity of the entity (user, device, service) before granting access? Include both human-facing and machine-to-machine interfaces.",
-      "showIf": { "==": [ { "var": "answers.Q1" }, "yes" ] },
+      "showIf": {
+        "==": [
+          {
+            "var": "answers.Q1"
+          },
+          "yes"
+        ]
+      },
       "options": [
-        { "value": "all",  "label": "All interfaces have authentication" },
-        { "value": "some", "label": "Some interfaces have authentication, some do not" },
-        { "value": "none", "label": "No authentication at all" }
-      ]
+        {
+          "value": "all",
+          "label": "All interfaces have authentication"
+        },
+        {
+          "value": "some",
+          "label": "Some interfaces have authentication, some do not"
+        },
+        {
+          "value": "none",
+          "label": "No authentication at all"
+        }
+      ],
+      "stakeholders": {
+        "lead": "Security architect",
+        "with": [
+          "Developer",
+          "Product owner"
+        ]
+      }
     },
     {
       "id": "Q3a",
@@ -34,8 +63,22 @@
       "text": "Does the PDE ship with hardcoded or shared default credentials?",
       "showIf": {
         "or": [
-          { "==": [ { "var": "answers.Q2" }, "some" ] },
-          { "==": [ { "var": "answers.Q2" }, "none" ] }
+          {
+            "==": [
+              {
+                "var": "answers.Q2"
+              },
+              "some"
+            ]
+          },
+          {
+            "==": [
+              {
+                "var": "answers.Q2"
+              },
+              "none"
+            ]
+          }
         ]
       },
       "options": [
@@ -43,24 +86,54 @@
           "value": "yes",
           "label": "Yes",
           "end": true,
-          "finalMessage": "⛔ CRITICAL NON-COMPLIANCE\n\nThe PDE ships with hardcoded or shared default credentials, violating CRA Annex I 2(b), 2(d), 2(e), and potentially 2(i). Implement unique per-device credentials, either factory-provisioned or enforced at first use."        },
+          "finalMessage": "⛔ CRITICAL NON-COMPLIANCE\n\nThe PDE ships with hardcoded or shared default credentials, violating CRA Annex I 2(b), 2(d), 2(e), and potentially 2(i). Implement unique per-device credentials, either factory-provisioned or enforced at first use."
+        },
         {
           "value": "no",
           "label": "No"
         }
-      ]
+      ],
+      "stakeholders": {
+        "lead": "Security architect",
+        "with": [
+          "Developer"
+        ]
+      }
     },
     {
       "id": "Q3b",
       "type": "single",
       "text": "Is the absence of authentication documented with a risk justification?",
       "showIf": {
-        "all": [
-          { "==": [ { "var": "answers.Q3a" }, "no" ] }
-        ],
-        "or": [
-          { "==": [ { "var": "answers.Q2" }, "none" ] },
-          { "==": [ { "var": "answers.Q2" }, "some" ] }
+        "and": [
+          {
+            "==": [
+              {
+                "var": "answers.Q3a"
+              },
+              "no"
+            ]
+          },
+          {
+            "or": [
+              {
+                "==": [
+                  {
+                    "var": "answers.Q2"
+                  },
+                  "none"
+                ]
+              },
+              {
+                "==": [
+                  {
+                    "var": "answers.Q2"
+                  },
+                  "some"
+                ]
+              }
+            ]
+          }
         ]
       },
       "options": [
@@ -68,19 +141,34 @@
           "value": "yes",
           "label": "Yes, justification exists",
           "end": true,
-          "finalMessage": "ℹ JUSTIFIED ABSENCE - VERIFY\n\nNo authentication is implemented but a risk justification is documented. This is only defensible if the PDE has no network connectivity and processes no data affecting security, safety, or privacy. Review the justification against CRA Recital 9 before proceeding."        },
+          "finalMessage": "ℹ JUSTIFIED ABSENCE - VERIFY\n\nNo authentication is implemented but a risk justification is documented. This is only defensible if the PDE has no network connectivity and processes no data affecting security, safety, or privacy. Review the justification against CRA Recital 9 before proceeding."
+        },
         {
           "value": "no",
           "label": "No, justification missing",
           "end": true,
-          "finalMessage": "⚠️ NON-COMPLIANCE\n\nNo authentication is implemented and no justification exists. The manufacturer must either implement authentication or produce a defensible Art. 13(4) justification. For any connected PDE, implementing authentication is almost always required."        }
-      ]
+          "finalMessage": "⚠️ NON-COMPLIANCE\n\nNo authentication is implemented and no justification exists. The manufacturer must either implement authentication or produce a defensible Art. 13(4) justification. For any connected PDE, implementing authentication is almost always required."
+        }
+      ],
+      "stakeholders": {
+        "lead": "Security architect",
+        "with": [
+          "Developer"
+        ]
+      }
     },
     {
       "id": "Q4",
       "type": "single",
       "text": "Where does authentication and access control happen?\nConsider the full flow: where credentials are verified, where access decisions are made, and where they are enforced.",
-      "showIf": { "!=": [ { "var": "answers.Q2" }, "none" ] },
+      "showIf": {
+        "!=": [
+          {
+            "var": "answers.Q2"
+          },
+          "none"
+        ]
+      },
       "options": [
         {
           "value": "local",
@@ -98,7 +186,13 @@
           "value": "customer",
           "label": "Delegated to customer infrastructure (LDAP, AD, RADIUS, SAML/OIDC)"
         }
-      ]
+      ],
+      "stakeholders": {
+        "lead": "Security architect",
+        "with": [
+          "Cloud/DevOps engineer"
+        ]
+      }
     },
     {
       "id": "Q5",
@@ -106,8 +200,22 @@
       "text": "Was the remote IAM service designed by or on behalf of the PDE manufacturer?\n(CRA Art. 3(2): \"remote data processing solution\" = software designed by or on behalf of the manufacturer, without which the PDE cannot perform one of its functions.)",
       "showIf": {
         "or": [
-          { "==": [ { "var": "answers.Q4" }, "remote" ] },
-          { "==": [ { "var": "answers.Q4" }, "hybrid" ] }
+          {
+            "==": [
+              {
+                "var": "answers.Q4"
+              },
+              "remote"
+            ]
+          },
+          {
+            "==": [
+              {
+                "var": "answers.Q4"
+              },
+              "hybrid"
+            ]
+          }
         ]
       },
       "options": [
@@ -117,19 +225,27 @@
         },
         {
           "value": "no",
-          "label": "No, third-party service (Auth0, Cognito, Azure AD B2C, Firebase Auth, etc.)"
+          "label": "No, third-party service (Auth0, Cognito, Microsoft Entra External ID, Firebase Auth, etc.)"
         },
         {
           "value": "partial",
           "label": "Partial, manufacturer's layer on top of third-party IdP"
         }
-      ]
+      ],
+      "stakeholders": {
+        "lead": "Security architect",
+        "with": [
+          "Product owner"
+        ]
+      }
     },
     {
       "id": "Q6",
       "type": "multi",
       "text": "What does the IAM function protect? (select all that apply)\nThe highest applicable category sets the risk level for access control (Annex I, 2(d)).",
-      "showIf": { "var": "answers.Q4" },
+      "showIf": {
+        "var": "answers.Q4"
+      },
       "options": [
         {
           "value": "config",
@@ -147,13 +263,21 @@
           "value": "systems",
           "label": "Access to other connected systems (gateways, ICS, network infrastructure)"
         }
-      ]
+      ],
+      "stakeholders": {
+        "lead": "Product owner",
+        "with": [
+          "Security architect"
+        ]
+      }
     },
     {
       "id": "Q7",
       "type": "single",
       "text": "How are initial credentials established?",
-      "showIf": { "var": "answers.Q4" },
+      "showIf": {
+        "var": "answers.Q4"
+      },
       "options": [
         {
           "value": "unique",
@@ -171,27 +295,61 @@
           "value": "none",
           "label": "No credentials (open access)"
         }
-      ]
+      ],
+      "stakeholders": {
+        "lead": "Security architect",
+        "with": [
+          "Developer"
+        ]
+      }
     },
     {
       "id": "Q8a",
       "type": "single",
       "text": "Does the PDE support multiple user roles or privilege levels? (e.g., admin vs user, operator vs engineer, read-only vs read-write)",
-      "showIf": { "var": "answers.Q4" },
+      "showIf": {
+        "var": "answers.Q4"
+      },
       "options": [
-        { "value": "yes", "label": "Yes" },
-        { "value": "no",  "label": "No" }
-      ]
+        {
+          "value": "yes",
+          "label": "Yes"
+        },
+        {
+          "value": "no",
+          "label": "No"
+        }
+      ],
+      "stakeholders": {
+        "lead": "Security architect",
+        "with": [
+          "Developer"
+        ]
+      }
     },
     {
       "id": "Q8b",
       "type": "single",
       "text": "Does the PDE store credentials locally? (passwords, tokens, certificates, keys, on the device itself)",
-      "showIf": { "var": "answers.Q4" },
+      "showIf": {
+        "var": "answers.Q4"
+      },
       "options": [
-        { "value": "yes", "label": "Yes" },
-        { "value": "no",  "label": "No" }
-      ]
+        {
+          "value": "yes",
+          "label": "Yes"
+        },
+        {
+          "value": "no",
+          "label": "No"
+        }
+      ],
+      "stakeholders": {
+        "lead": "Developer",
+        "with": [
+          "Security architect"
+        ]
+      }
     },
     {
       "id": "Q8c",
@@ -199,34 +357,122 @@
       "text": "Can the PDE operate its essential functions if the remote IAM is unavailable? (Only for remote or hybrid architectures)",
       "showIf": {
         "or": [
-          { "==": [ { "var": "answers.Q4" }, "remote" ] },
-          { "==": [ { "var": "answers.Q4" }, "hybrid" ] }
+          {
+            "==": [
+              {
+                "var": "answers.Q4"
+              },
+              "remote"
+            ]
+          },
+          {
+            "==": [
+              {
+                "var": "answers.Q4"
+              },
+              "hybrid"
+            ]
+          }
         ]
       },
       "options": [
-        { "value": "yes", "label": "Yes" },
-        { "value": "no",  "label": "No" }
-      ]
+        {
+          "value": "yes",
+          "label": "Yes"
+        },
+        {
+          "value": "no",
+          "label": "No"
+        }
+      ],
+      "stakeholders": {
+        "lead": "Security architect",
+        "with": [
+          "Developer",
+          "Cloud/DevOps engineer"
+        ]
+      }
     },
     {
       "id": "Q8d",
       "type": "single",
       "text": "Does the PDE log authentication and access events? (successful/failed logins, access decisions, credential or config changes)",
-      "showIf": { "var": "answers.Q4" },
+      "showIf": {
+        "var": "answers.Q4"
+      },
       "options": [
-        { "value": "yes", "label": "Yes" },
-        { "value": "no",  "label": "No" }
-      ]
+        {
+          "value": "yes",
+          "label": "Yes"
+        },
+        {
+          "value": "no",
+          "label": "No"
+        }
+      ],
+      "stakeholders": {
+        "lead": "Developer",
+        "with": [
+          "Cloud/DevOps engineer",
+          "Security architect"
+        ]
+      }
     },
     {
       "id": "Q8e",
       "type": "single",
       "text": "Can the IAM component be updated independently of the full firmware/software?",
-      "showIf": { "var": "answers.Q4" },
+      "showIf": {
+        "var": "answers.Q4"
+      },
       "options": [
-        { "value": "yes", "label": "Yes" },
-        { "value": "no",  "label": "No" }
-      ]
+        {
+          "value": "yes",
+          "label": "Yes"
+        },
+        {
+          "value": "no",
+          "label": "No"
+        }
+      ],
+      "stakeholders": {
+        "lead": "Developer",
+        "with": [
+          "Cloud/DevOps engineer"
+        ]
+      }
+    },
+    {
+      "id": "PLATFORMS",
+      "type": "multi",
+      "text": "Which cloud IAM platform(s) does the product use or plan to use?\nSelect all that apply. Platform-specific best-practice questions will follow for each one you choose.",
+      "showIf": {
+        "or": [
+          {
+            "==": [
+              {
+                "var": "answers.Q4"
+              },
+              "remote"
+            ]
+          },
+          {
+            "==": [
+              {
+                "var": "answers.Q4"
+              },
+              "hybrid"
+            ]
+          }
+        ]
+      },
+      "options": [],
+      "stakeholders": {
+        "lead": "Security architect",
+        "with": [
+          "Cloud / IAM administrator"
+        ]
+      }
     },
     {
       "id": "END",

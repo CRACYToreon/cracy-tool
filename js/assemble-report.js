@@ -5,6 +5,7 @@
 
 import { deriveLayer1Profile, deriveRiskLevel } from "./survey-profile.js";
 import { humanQuestionRef } from "./question-labels.js";
+import { computePlatformFindings } from "./platform-findings.js";
 
 const Q4_LABELS = {
   local: "On-device IAM (Architecture A path)",
@@ -48,6 +49,44 @@ function esc(s) {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
+}
+
+/** Render label as an external link when a url is given, else plain escaped text. */
+function extLink(url, label) {
+  if (!url) return esc(label);
+  return `<a class="survey-ext-link" href="${esc(url)}" target="_blank" rel="noopener noreferrer">${esc(label)}</a>`;
+}
+
+/** Point each CRA reference at its own section anchor so they don't all land in the same place. */
+function craLinkFor(id, base) {
+  const b = base || "https://eur-lex.europa.eu/eli/reg/2024/2847/oj/eng";
+  if (id === "art14") return b + "#art_14";
+  if (id === "annex2_user_info") return b + "#anx_II";
+  return b + "#anx_I"; // Annex I essential requirements (2a-2m) and Part II
+}
+
+/** Escape text but keep **bold** markers as <strong>. */
+function richText(s) {
+  return esc(s).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
+
+/** Legend documenting which stakeholders should discuss which questions. */
+function buildRolesHtml(meta) {
+  const roles = meta && meta.roles;
+  if (!roles || typeof roles !== "object") return "";
+  const items = Object.keys(roles)
+    .map((k) => `<li><strong>${esc(k)}</strong>: ${esc(roles[k])}</li>`)
+    .join("");
+  if (!items) return "";
+  return (
+    '<section class="survey-roles-section">' +
+    '<h3 class="survey-assembled-title">Suggested stakeholders</h3>' +
+    '<div class="survey-explanation survey-explanation--tight">' +
+    '<p class="survey-explanation__p">Each question is tagged with the stakeholders best placed to discuss it (shown above each question as "Best discussed with"). A lead is marked; the others are collaborators to involve. Stakeholders:</p>' +
+    `<ul class="survey-explanation__list">${items}</ul>` +
+    "</div></section>"
+  );
 }
 
 function applicableStatuses() {
@@ -127,11 +166,13 @@ function buildCraRequirementsExplainerHtml() {
   );
 }
 
-export function buildAssembledReportHtml(engine, selectedFrameworkKeys, mapping) {
+export function buildAssembledReportHtml(engine, selectedFrameworkKeys, mapping, platforms, applyLogic) {
   const answers = engine.answers || {};
   const profile = deriveLayer1Profile(answers);
   const risk = deriveRiskLevel(answers);
   const { meta, layer1Applicability, layer2Requirements, riskCalibration, q8Addons } = mapping;
+  const findings = computePlatformFindings(answers, platforms || [], applyLogic);
+  const sevToPill = (s) => (s === "gap" ? "violation" : s === "warn" ? "partial" : "full");
 
   if (!profile) {
     return "<div class=\"survey-assembled survey-assembled--empty\"><p class=\"survey-assemble-note\">Could not derive architecture profile from answers. Complete the survey through Question 4 (and Question 5 if remote or hybrid) for a full mapping.</p></div>";
@@ -143,6 +184,7 @@ export function buildAssembledReportHtml(engine, selectedFrameworkKeys, mapping)
   let html = '<div class="survey-assembled survey-assembled--layout">';
   html += '<div class="survey-assembled__rail">';
   html += buildDigestHtml(answers, profile, risk, keys, fwLabels);
+  html += buildRolesHtml(meta);
 
   html += '<section class="survey-profile-card">';
   html += "<h3 class=\"survey-assembled-title\">Profile and risk calibration</h3>";
@@ -178,18 +220,33 @@ export function buildAssembledReportHtml(engine, selectedFrameworkKeys, mapping)
   html += "<div class=\"survey-cra-section__intro\">";
   html += "<h3 class=\"survey-assembled-title\">Applicable CRA requirements</h3>";
   html += buildCraRequirementsExplainerHtml();
+  const craUrl = (meta && meta.cra_source && meta.cra_source.url) || "https://eur-lex.europa.eu/eli/reg/2024/2847/oj/eng";
+  html += `<p class="survey-cra-source">Official text: ${extLink(craUrl, "Regulation (EU) 2024/2847, Cyber Resilience Act (EUR-Lex)")}. The requirement ids below (2a, 2b, ...) refer to Annex I of that regulation; each id links to the source.</p>`;
   html += "</div>";
   html += '<div class="survey-cra-section__cards">';
 
   applicable.forEach((row) => {
     const l2 = layer2ById[row.id];
     const title = cleanDisplay(row.title);
+    const rowFindings = findings.filter(
+      (f) => Array.isArray(f.cra) && f.cra.includes(row.id) && (f.severity === "gap" || f.severity === "warn")
+    );
+    const noteHtml = rowFindings.length
+      ? '<div class="survey-explanation survey-explanation--tight survey-cra-card__platform-note"><p class="survey-explanation__p"><strong>Cloud platform findings for this requirement:</strong></p><ul class="survey-explanation__list">' +
+        rowFindings
+          .map(
+            (f) =>
+              `<li>${esc(f.platformLabel)} &middot; ${esc(f.questionLabel)} <span class="survey-cra-pill survey-cra-pill--${sevToPill(f.severity)}">${esc(f.severity)}</span></li>`
+          )
+          .join("") +
+        "</ul></div>"
+      : "";
     html += `<article class="survey-cra-card"><header class="survey-cra-card__head">`;
-    html += `<span class="survey-cra-card__id">${esc(row.id)}</span>`;
+    html += `<span class="survey-cra-card__id">${extLink(craLinkFor(row.id, craUrl), row.id)}</span>`;
     html += `<span class="survey-cra-pill survey-cra-pill--${esc(row.status)}">${esc(row.status)}</span>`;
     html += `</header><p class="survey-cra-card__title">${esc(title)}</p>`;
     if (!l2) {
-      html += "<p class=\"survey-assemble-note\">No Layer 2 mapping entry.</p></article>";
+      html += "<p class=\"survey-assemble-note\">No Layer 2 mapping entry.</p>" + noteHtml + "</article>";
       return;
     }
     html += '<div class="survey-fw-grid">';
@@ -197,14 +254,15 @@ export function buildAssembledReportHtml(engine, selectedFrameworkKeys, mapping)
       const block = l2.frameworks?.[fk];
       if (!block) return;
       const label = fwLabels[fk]?.label || fk;
+      const fwUrl = fwLabels[fk]?.url;
       const refs = (block.references || []).join(", ");
       const help = cleanDisplay(block.how_it_helps || "");
-      html += `<div class="survey-fw-card"><div class="survey-fw-card__name">${esc(label)}</div>`;
+      html += `<div class="survey-fw-card"><div class="survey-fw-card__name">${extLink(fwUrl, label)}</div>`;
       if (refs) html += `<div class="survey-fw-card__refs">${esc(refs)}</div>`;
       if (help) html += `<p class="survey-fw-card__help">${esc(help)}</p>`;
       html += "</div>";
     });
-    html += "</div></article>";
+    html += "</div>" + noteHtml + "</article>";
   });
   html += "</div></section>";
 
@@ -227,12 +285,48 @@ export function buildAssembledReportHtml(engine, selectedFrameworkKeys, mapping)
     (pack.controls || []).forEach((c) => {
       if (!keys.includes(c.framework)) return;
       const fl = fwLabels[c.framework]?.label || c.framework;
-      html += `<li><span class="survey-addon-fw">${esc(fl)}</span> <code class="survey-addon-ref">${esc(c.reference)}</code> ${esc(c.note)}</li>`;
+      const flUrl = fwLabels[c.framework]?.url;
+      html += `<li><span class="survey-addon-fw">${extLink(flUrl, fl)}</span> <code class="survey-addon-ref">${esc(c.reference)}</code> ${esc(c.note)}</li>`;
     });
     html += "</ul></article>";
   });
   if (!anyAddon) {
     html += "<p class=\"survey-assemble-note\">No Question 8 items answered \"Yes\" for your path.</p>";
+  }
+  html += "</section>";
+
+  html += "<section class=\"survey-addon-section survey-platform-section\">";
+  html += "<h3 class=\"survey-assembled-title\">Cloud platform hardening</h3>";
+  html += '<div class="survey-explanation survey-explanation--tight">';
+  html +=
+    "<p class=\"survey-explanation__p\">" +
+    "Platform-specific findings from the cloud IAM platform(s) you selected, mapped to the Annex I points they support. " +
+    "These are configuration best-practices for the named platform, cross-referenced for gap analysis, not an official crosswalk.</p>";
+  html += "</div>";
+  if (!findings.length) {
+    html += "<p class=\"survey-assemble-note\">No cloud platform selected, or no platform questions answered.</p>";
+  } else {
+    const byPlatform = {};
+    const order = [];
+    findings.forEach((f) => {
+      if (!byPlatform[f.platformLabel]) {
+        byPlatform[f.platformLabel] = [];
+        order.push(f.platformLabel);
+      }
+      byPlatform[f.platformLabel].push(f);
+    });
+    order.forEach((pl) => {
+      html += `<article class="survey-addon-card"><h4 class="survey-addon-card__title">${esc(pl)}</h4><ul class="survey-addon-card__list">`;
+      byPlatform[pl].forEach((f) => {
+        const craTxt = f.cra && f.cra.length ? ` <span class="survey-addon-ref">Annex I ${esc(f.cra.join(", "))}</span>` : "";
+        html += `<li><span class="survey-cra-pill survey-cra-pill--${sevToPill(f.severity)}">${esc(f.severity)}</span> <strong>${esc(f.questionLabel)}</strong>${craTxt}`;
+        if ((f.severity === "gap" || f.severity === "warn") && f.text) {
+          html += `<div class="survey-addon-finding-note">${richText(f.text)}</div>`;
+        }
+        html += "</li>";
+      });
+      html += "</ul></article>";
+    });
   }
   html += "</section>";
 

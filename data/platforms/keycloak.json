@@ -1,0 +1,163 @@
+{
+  "id": "keycloak",
+  "label": "Keycloak",
+  "note": "Keycloak (self-hosted or managed). Guidance covers authenticators, brute-force defences, token and session handling, client credentials, and deployment hardening.",
+  "questions": [
+    {
+      "id": "KC_MFA",
+      "type": "multi",
+      "label": "Authenticators / MFA",
+      "text": "Which authentication methods are required in the browser flow? (select all that apply)",
+      "options": [
+        { "value": "passkey", "label": "Passkeys / WebAuthn passwordless (phishing-resistant)" },
+        { "value": "otp", "label": "OTP (TOTP) required" },
+        { "value": "password_only", "label": "Password only" },
+        { "value": "none", "label": "No MFA / optional", "exclusive": true }
+      ],
+      "guidance": [
+        {
+          "when": { "in": ["passkey", { "var": "answers.KC_MFA" }] },
+          "severity": "ok",
+          "text": "**Strong posture.** WebAuthn passwordless / passkeys are phishing-resistant. Enable them under Authentication > Policies > WebAuthn Passwordless Policy and require them in the browser flow for sensitive clients."
+        },
+        {
+          "when": { "in": ["otp", { "var": "answers.KC_MFA" }] },
+          "severity": "ok",
+          "text": "**Good.** TOTP is a solid factor. Set OTP as a required action (or conditional OTP in the browser flow) and consider adding WebAuthn/passkeys for phishing resistance."
+        },
+        {
+          "when": { "in": ["password_only", { "var": "answers.KC_MFA" }] },
+          "severity": "gap",
+          "text": "**GAP.** Password-only. Add a second factor: configure the browser flow with conditional OTP or enable WebAuthn/passkeys, and set a strong password policy."
+        },
+        {
+          "when": true,
+          "severity": "gap",
+          "text": "**GAP.** No MFA. Configure the browser authentication flow to require OTP or WebAuthn; requiring OTP is the recommended mitigation against password guessing."
+        }
+      ],
+      "cra": ["2d"],
+      "stakeholders": { "lead": "Cloud / IAM administrator", "with": ["Security architect", "Developer"] }
+    },
+    {
+      "id": "KC_BRUTE",
+      "type": "single",
+      "label": "Brute-force detection",
+      "text": "Is realm brute-force detection enabled (Realm settings > Security defenses), together with a password policy?",
+      "options": [
+        { "value": "on", "label": "Enabled (lockout / backoff) plus a password policy" },
+        { "value": "partial", "label": "Partly configured" },
+        { "value": "off", "label": "Off (Keycloak default)" }
+      ],
+      "guidance": [
+        {
+          "when": { "==": [{ "var": "answers.KC_BRUTE" }, "off"] },
+          "severity": "gap",
+          "text": "**GAP.** Brute-force detection is off by default. Enable it under Realm settings > Security defenses > Brute Force Detection (temporary lockout with backoff), set a complex password policy, and add reverse-proxy rate limiting for volumetric attacks."
+        },
+        {
+          "when": { "==": [{ "var": "answers.KC_BRUTE" }, "partial"] },
+          "severity": "warn",
+          "text": "**Review.** Finish the configuration: prefer temporary lockout with progressive backoff (permanent lockout invites denial-of-service), set a password policy, and forward LOGIN_ERROR and lockout events to your SIEM."
+        },
+        {
+          "when": { "==": [{ "var": "answers.KC_BRUTE" }, "on"] },
+          "severity": "ok",
+          "text": "**Good.** Brute-force detection and a password policy are in place. Keep lockout temporary rather than permanent, and pair with reverse-proxy rate limiting and event monitoring."
+        }
+      ],
+      "cra": ["2d", "2l"],
+      "stakeholders": { "lead": "Cloud / IAM administrator", "with": ["Security architect", "Developer"] }
+    },
+    {
+      "id": "KC_TOKENS",
+      "type": "single",
+      "label": "Tokens & sessions",
+      "text": "How are token lifespans and refresh tokens configured?",
+      "options": [
+        { "value": "rotation", "label": "Short access tokens, refresh-token rotation (Revoke Refresh Token), bounded SSO session" },
+        { "value": "default", "label": "Keycloak defaults" },
+        { "value": "long", "label": "Long-lived tokens, no rotation" }
+      ],
+      "guidance": [
+        {
+          "when": { "==": [{ "var": "answers.KC_TOKENS" }, "long"] },
+          "severity": "warn",
+          "text": "**Review.** Shorten the access-token lifespan, enable 'Revoke Refresh Token' (rotation) so reused tokens are detected, keep the authorization-code lifespan short (under ~10s), and bound SSO session idle/max. Consider DPoP for sender-constrained tokens."
+        },
+        {
+          "when": { "==": [{ "var": "answers.KC_TOKENS" }, "default"] },
+          "severity": "warn",
+          "text": "**Review.** Confirm token lifespans (Realm settings > Tokens), enable refresh-token rotation, and set SSO session idle/max proportionate to risk."
+        },
+        {
+          "when": { "==": [{ "var": "answers.KC_TOKENS" }, "rotation"] },
+          "severity": "ok",
+          "text": "**Good.** Short-lived tokens with refresh rotation and bounded sessions support reuse detection. Validate token signature, issuer, and audience in resource servers."
+        }
+      ],
+      "cra": ["2d", "2e"],
+      "stakeholders": { "lead": "Cloud / IAM administrator", "with": ["Security architect", "Developer"] }
+    },
+    {
+      "id": "KC_CLIENT",
+      "type": "single",
+      "label": "Client credentials",
+      "text": "How are OAuth clients configured for browser / native (public) apps?",
+      "options": [
+        { "value": "pkce", "label": "Public client with PKCE (proof key required)" },
+        { "value": "confidential", "label": "Confidential client, secret server-side (or mTLS / private_key_jwt)" },
+        { "value": "secret_public", "label": "A secret, or no PKCE, on a public client" }
+      ],
+      "guidance": [
+        {
+          "when": { "==": [{ "var": "answers.KC_CLIENT" }, "secret_public"] },
+          "severity": "gap",
+          "text": "**GAP.** Public clients must use PKCE and hold no usable secret. Enable Proof Key for Code Exchange and register specific (non-wildcard) redirect URIs to prevent open-redirect and code-interception attacks."
+        },
+        {
+          "when": true,
+          "severity": "ok",
+          "text": "**Good.** Public clients use PKCE; confidential clients keep secrets server-side (or use mTLS / private_key_jwt). Keep redirect URIs specific."
+        }
+      ],
+      "cra": ["2e"],
+      "stakeholders": { "lead": "Cloud / IAM administrator", "with": ["Security architect", "Developer"] }
+    },
+    {
+      "id": "KC_HARDENING",
+      "type": "single",
+      "label": "Deployment hardening",
+      "text": "For a self-hosted deployment: is TLS enforced and the admin console / REST API restricted?",
+      "options": [
+        { "value": "hardened", "label": "HTTPS enforced, admin endpoints not public, default admin changed, production mode" },
+        { "value": "partial", "label": "Partly hardened" },
+        { "value": "default", "label": "Dev / default posture" }
+      ],
+      "guidance": [
+        {
+          "when": { "==": [{ "var": "answers.KC_HARDENING" }, "default"] },
+          "severity": "gap",
+          "text": "**GAP.** Do not run a dev/default posture in production. Enforce HTTPS everywhere, run Keycloak in production mode behind a reverse proxy, keep the admin console / REST API off the public internet, and change the default admin credentials."
+        },
+        {
+          "when": { "==": [{ "var": "answers.KC_HARDENING" }, "partial"] },
+          "severity": "warn",
+          "text": "**Review.** Close the gaps: require SSL for all realms, restrict the admin console / REST API to trusted networks, set browser security headers (HSTS, CSP) at the proxy, and pin the Keycloak version."
+        },
+        {
+          "when": { "==": [{ "var": "answers.KC_HARDENING" }, "hardened"] },
+          "severity": "ok",
+          "text": "**Good.** TLS enforced, admin surface restricted, production mode. Keep the version patched (track Keycloak CVEs) and monitor admin events."
+        }
+      ],
+      "cra": ["2b", "2d", "2j"],
+      "stakeholders": { "lead": "Cloud / IAM administrator", "with": ["Security architect", "Cloud/DevOps engineer"] }
+    }
+  ],
+  "references": [
+    { "label": "Keycloak Server Administration Guide", "url": "https://www.keycloak.org/docs/latest/server_admin/index.html" },
+    { "label": "Securing applications and services (clients, PKCE)", "url": "https://www.keycloak.org/docs/latest/securing_apps/index.html" },
+    { "label": "Mitigating security threats (Red Hat build of Keycloak)", "url": "https://docs.redhat.com/en/documentation/red_hat_build_of_keycloak/24.0/html/server_administration_guide/mitigating_security_threats" }
+  ]
+}

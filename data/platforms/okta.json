@@ -1,0 +1,145 @@
+{
+  "id": "okta",
+  "label": "Okta",
+  "note": "Okta Customer / Workforce Identity. Guidance covers authenticators and phishing resistance, ThreatInsight and adaptive policy, token and session handling, and app client credentials.",
+  "questions": [
+    {
+      "id": "OKTA_MFA",
+      "type": "multi",
+      "label": "Authenticators",
+      "text": "Which authenticators can satisfy your app sign-in (authentication) policies? (select all that apply)",
+      "options": [
+        { "value": "passkey", "label": "Passkeys (FIDO2 WebAuthn) / security keys (phishing-resistant)" },
+        { "value": "fastpass", "label": "Okta FastPass / Okta Verify device-bound (phishing-resistant)" },
+        { "value": "verify_push", "label": "Okta Verify push / TOTP (non-FastPass)" },
+        { "value": "sms", "label": "SMS / voice / email OTP" },
+        { "value": "password_only", "label": "Password only" },
+        { "value": "none", "label": "No MFA", "exclusive": true }
+      ],
+      "guidance": [
+        {
+          "when": { "in": ["passkey", { "var": "answers.OKTA_MFA" }] },
+          "severity": "ok",
+          "text": "**Strong posture.** Passkeys (FIDO2 WebAuthn) are phishing-resistant. Turn on the 'Phishing resistant' requirement in the app sign-in policy so weaker factors cannot be used as a fallback."
+        },
+        {
+          "when": { "in": ["fastpass", { "var": "answers.OKTA_MFA" }] },
+          "severity": "ok",
+          "text": "**Strong posture.** Okta FastPass is phishing-resistant when the app sign-in policy strictly enforces phishing resistance (no fallback). Also require an existing phishing-resistant factor before enrolling new authenticators to protect the enrollment flow."
+        },
+        {
+          "when": { "in": ["verify_push", { "var": "answers.OKTA_MFA" }] },
+          "severity": "warn",
+          "text": "**Review.** Okta Verify push/TOTP (without FastPass) is not phishing-resistant and is exposed to adversary-in-the-middle and push-fatigue attacks. Enable number challenge and prefer Passkeys or FastPass for sensitive apps."
+        },
+        {
+          "when": { "in": ["sms", { "var": "answers.OKTA_MFA" }] },
+          "severity": "warn",
+          "text": "**Review.** SMS, voice, and email OTP are weak (SIM-swap, interception, toll fraud). Okta recommends replacing them with Passkeys or FastPass; keep only as a last-resort recovery factor with anti-toll-fraud protection."
+        },
+        {
+          "when": { "in": ["password_only", { "var": "answers.OKTA_MFA" }] },
+          "severity": "gap",
+          "text": "**GAP.** Password-only sign-in. Require a second factor through an authentication policy and move toward phishing-resistant authenticators (Passkeys or FastPass)."
+        },
+        {
+          "when": true,
+          "severity": "gap",
+          "text": "**GAP.** No MFA. Enforce MFA with an app sign-in policy. The default 'Any two factors' policy is for testing only; replace it with a policy that requires phishing-resistant factors and uses device/risk context."
+        }
+      ],
+      "cra": ["2d"],
+      "stakeholders": { "lead": "Cloud / IAM administrator", "with": ["Security architect", "Developer"] }
+    },
+    {
+      "id": "OKTA_THREAT",
+      "type": "single",
+      "label": "ThreatInsight & adaptive policy",
+      "text": "Is Okta ThreatInsight enabled, and do authentication policies use risk/context (device assurance, network zones, behaviour)?",
+      "options": [
+        { "value": "block", "label": "ThreatInsight log-and-block, plus risk/context-based policies" },
+        { "value": "log", "label": "ThreatInsight log-only" },
+        { "value": "off", "label": "Off / static policies only" }
+      ],
+      "guidance": [
+        {
+          "when": { "==": [{ "var": "answers.OKTA_THREAT" }, "off"] },
+          "severity": "gap",
+          "text": "**GAP.** Enable ThreatInsight (Security > General) to block known-malicious IPs, and add risk/context conditions (device assurance, network zones, behaviour) to authentication policies so sign-ins step up on risk."
+        },
+        {
+          "when": { "==": [{ "var": "answers.OKTA_THREAT" }, "log"] },
+          "severity": "warn",
+          "text": "**Review.** ThreatInsight is log-only. Move to log-and-block for known-bad IPs once tuned, and add risk/context conditions to your sign-in policies."
+        },
+        {
+          "when": { "==": [{ "var": "answers.OKTA_THREAT" }, "block"] },
+          "severity": "ok",
+          "text": "**Good.** ThreatInsight is blocking and policies are risk-aware. Stream the System Log to your SIEM and alert on rate-limit, new-device, and impossible-travel signals."
+        }
+      ],
+      "cra": ["2d", "2l"],
+      "stakeholders": { "lead": "Cloud / IAM administrator", "with": ["Security architect", "Developer"] }
+    },
+    {
+      "id": "OKTA_TOKENS",
+      "type": "single",
+      "label": "Tokens & sessions",
+      "text": "How are OIDC tokens and sessions configured for your apps?",
+      "options": [
+        { "value": "short", "label": "Short-lived access tokens, refresh-token rotation, bounded sessions" },
+        { "value": "default", "label": "Okta defaults" },
+        { "value": "long", "label": "Long-lived tokens / no rotation" }
+      ],
+      "guidance": [
+        {
+          "when": { "==": [{ "var": "answers.OKTA_TOKENS" }, "long"] },
+          "severity": "warn",
+          "text": "**Review.** Shorten access-token lifetime, enable refresh-token rotation in the custom authorization server, and set global session idle/absolute limits proportionate to risk. Long-lived static tokens widen the account-takeover window."
+        },
+        {
+          "when": { "==": [{ "var": "answers.OKTA_TOKENS" }, "default"] },
+          "severity": "warn",
+          "text": "**Review.** Confirm the authorization server's token lifetimes and refresh-token rotation, and set global session idle/absolute limits proportionate to the product's sensitivity."
+        },
+        {
+          "when": { "==": [{ "var": "answers.OKTA_TOKENS" }, "short"] },
+          "severity": "ok",
+          "text": "**Good.** Short-lived tokens with refresh rotation and bounded sessions support reuse detection. Validate JWT signature (JWKS), issuer, audience, and expiry on every request."
+        }
+      ],
+      "cra": ["2d", "2e"],
+      "stakeholders": { "lead": "Cloud / IAM administrator", "with": ["Security architect", "Developer"] }
+    },
+    {
+      "id": "OKTA_APP",
+      "type": "single",
+      "label": "App client credentials",
+      "text": "How are OAuth client credentials handled for browser / native (public) apps?",
+      "options": [
+        { "value": "pkce", "label": "Public app, Authorization Code + PKCE, no secret" },
+        { "value": "backend", "label": "Confidential app, secret kept server-side only" },
+        { "value": "frontend", "label": "Client secret embedded in the SPA / native app" }
+      ],
+      "guidance": [
+        {
+          "when": { "==": [{ "var": "answers.OKTA_APP" }, "frontend"] },
+          "severity": "gap",
+          "text": "**GAP.** Public clients must not carry a secret. Use the Authorization Code flow with PKCE for SPA/native apps and keep any client secret server-side only."
+        },
+        {
+          "when": true,
+          "severity": "ok",
+          "text": "**Good.** Public app with PKCE, or a confidential app whose secret stays server-side. Register exact (non-wildcard) redirect URIs and rotate any secrets."
+        }
+      ],
+      "cra": ["2e"],
+      "stakeholders": { "lead": "Cloud / IAM administrator", "with": ["Security architect", "Developer"] }
+    }
+  ],
+  "references": [
+    { "label": "Phishing-resistant authentication (Okta Help)", "url": "https://help.okta.com/oie/en-us/content/topics/identity-engine/authenticators/phishing-resistant-auth.htm" },
+    { "label": "Require phishing-resistant authenticator to enroll (Okta Help)", "url": "https://help.okta.com/oie/en-us/content/topics/identity-engine/authenticators/require-phishing-resistant-authenticator.htm" },
+    { "label": "Phishing resistance and ThreatInsight (Okta)", "url": "https://www.okta.com/phishing-resistance/" }
+  ]
+}

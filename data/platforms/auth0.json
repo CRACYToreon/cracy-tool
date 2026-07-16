@@ -1,0 +1,310 @@
+{
+  "id": "auth0",
+  "label": "Auth0",
+  "note": "Auth0 CIAM platform. Guidance covers MFA, Attack Protection, token handling, and client-secret hygiene.",
+  "questions": [
+    {
+      "id": "AUTH0_MFA",
+      "type": "multi",
+      "label": "MFA factors",
+      "text": "Which MFA factors are enabled? (select all that apply)",
+      "options": [
+        {
+          "value": "webauthn",
+          "label": "WebAuthn / passkeys (phishing-resistant)"
+        },
+        {
+          "value": "otp",
+          "label": "One-time password app (TOTP)"
+        },
+        {
+          "value": "push",
+          "label": "Push notification (Guardian)"
+        },
+        {
+          "value": "sms",
+          "label": "SMS"
+        },
+        {
+          "value": "voice",
+          "label": "Voice call"
+        },
+        {
+          "value": "none",
+          "label": "MFA disabled",
+          "exclusive": true
+        }
+      ],
+      "guidance": [
+        {
+          "when": {
+            "in": [
+              "webauthn",
+              {
+                "var": "answers.AUTH0_MFA"
+              }
+            ]
+          },
+          "severity": "ok",
+          "text": "**Strong posture.** WebAuthn / passkeys are phishing-resistant. Consider Adaptive MFA to step up only on risk signals, reducing friction."
+        },
+        {
+          "when": {
+            "in": [
+              "otp",
+              {
+                "var": "answers.AUTH0_MFA"
+              }
+            ]
+          },
+          "severity": "ok",
+          "text": "**Good.** TOTP is a solid factor. For phishing resistance on sensitive apps, add WebAuthn / passkeys and enable Adaptive MFA for risk-based step-up."
+        },
+        {
+          "when": {
+            "in": [
+              "push",
+              {
+                "var": "answers.AUTH0_MFA"
+              }
+            ]
+          },
+          "severity": "warn",
+          "text": "**Review.** Push is convenient but susceptible to MFA-fatigue (prompt bombing). Enable number-matching where available and prefer WebAuthn for high-value access."
+        },
+        {
+          "when": {
+            "in": [
+              "sms",
+              {
+                "var": "answers.AUTH0_MFA"
+              }
+            ]
+          },
+          "severity": "warn",
+          "text": "**Review.** Auth0 recommends replacing SMS/voice with OTP or WebAuthn to mitigate SIM-swap and SMS-pumping/toll-fraud. If SMS is kept, enable provider-side fraud protection."
+        },
+        {
+          "when": {
+            "in": [
+              "voice",
+              {
+                "var": "answers.AUTH0_MFA"
+              }
+            ]
+          },
+          "severity": "warn",
+          "text": "**Review.** Auth0 recommends replacing SMS/voice with OTP or WebAuthn to mitigate toll fraud and interception."
+        },
+        {
+          "when": true,
+          "severity": "gap",
+          "text": "**GAP.** MFA is disabled. Enable MFA and consider Adaptive MFA to trigger step-up on new devices, IP reputation, or impossible-travel signals."
+        }
+      ],
+      "cra": [
+        "2d"
+      ],
+      "stakeholders": {
+        "lead": "Cloud / IAM administrator",
+        "with": [
+          "Security architect",
+          "Developer"
+        ]
+      }
+    },
+    {
+      "id": "AUTH0_ATTACK",
+      "type": "single",
+      "label": "Attack Protection",
+      "text": "Are Auth0 Attack Protection features enabled (Brute-force Protection, Suspicious IP Throttling, Breached Password Detection, Bot Detection)?",
+      "options": [
+        {
+          "value": "all",
+          "label": "All four enabled"
+        },
+        {
+          "value": "some",
+          "label": "Some enabled"
+        },
+        {
+          "value": "off",
+          "label": "None / disabled"
+        }
+      ],
+      "guidance": [
+        {
+          "when": {
+            "==": [
+              {
+                "var": "answers.AUTH0_ATTACK"
+              },
+              "off"
+            ]
+          },
+          "severity": "gap",
+          "text": "**GAP.** Enable Attack Protection. Brute-force Protection, Suspicious IP Throttling, Breached Password Detection, and Bot Detection are the core defenses against credential-stuffing and account takeover, and apply with minimal user friction."
+        },
+        {
+          "when": {
+            "==": [
+              {
+                "var": "answers.AUTH0_ATTACK"
+              },
+              "some"
+            ]
+          },
+          "severity": "warn",
+          "text": "**Review.** Turn on the remaining Attack Protection features, especially Breached Password Detection (blocks known-leaked credentials) and Bot Detection (CAPTCHA on suspected bot traffic). Cover every entry point: Universal Login, custom pages, passwordless, native apps, and APIs."
+        },
+        {
+          "when": {
+            "==": [
+              {
+                "var": "answers.AUTH0_ATTACK"
+              },
+              "all"
+            ]
+          },
+          "severity": "ok",
+          "text": "**Good.** Core Attack Protection is active. Stream Auth0 logs to your SIEM and alert on credential-stuffing and signup-fraud spikes."
+        }
+      ],
+      "cra": [
+        "2d"
+      ],
+      "stakeholders": {
+        "lead": "Cloud / IAM administrator",
+        "with": [
+          "Security architect",
+          "Developer"
+        ]
+      }
+    },
+    {
+      "id": "AUTH0_TOKENS",
+      "type": "single",
+      "label": "Refresh tokens",
+      "text": "How are refresh tokens configured?",
+      "options": [
+        {
+          "value": "rotation",
+          "label": "Rotation enabled, with absolute / inactivity expiration"
+        },
+        {
+          "value": "long",
+          "label": "Long-lived, no rotation"
+        },
+        {
+          "value": "none",
+          "label": "No refresh tokens (short sessions only)"
+        }
+      ],
+      "guidance": [
+        {
+          "when": {
+            "==": [
+              {
+                "var": "answers.AUTH0_TOKENS"
+              },
+              "long"
+            ]
+          },
+          "severity": "warn",
+          "text": "**Review.** Enable refresh-token rotation and set absolute plus inactivity expiration. Rotation lets Auth0 detect and revoke reused (stolen) tokens; long-lived static refresh tokens widen the account-takeover window. Keep session and token lifetimes proportionate to the app's risk."
+        },
+        {
+          "when": {
+            "==": [
+              {
+                "var": "answers.AUTH0_TOKENS"
+              },
+              "rotation"
+            ]
+          },
+          "severity": "ok",
+          "text": "**Good.** Refresh-token rotation with bounded expiration supports reuse detection. Confirm lifetimes match the product's sensitivity."
+        },
+        {
+          "when": true,
+          "severity": "ok",
+          "text": "**Good.** No long-lived refresh tokens. Confirm session lifetimes are proportionate to sensitivity."
+        }
+      ],
+      "cra": [
+        "2d",
+        "2e"
+      ],
+      "stakeholders": {
+        "lead": "Cloud / IAM administrator",
+        "with": [
+          "Security architect",
+          "Developer"
+        ]
+      }
+    },
+    {
+      "id": "AUTH0_SECRET",
+      "type": "single",
+      "label": "Client secrets",
+      "text": "How are client secrets handled for SPAs / native apps?",
+      "options": [
+        {
+          "value": "pkce",
+          "label": "Public app with PKCE, no secret"
+        },
+        {
+          "value": "backend",
+          "label": "Confidential app, secret kept server-side only"
+        },
+        {
+          "value": "frontend",
+          "label": "Client secret present in SPA / native app"
+        }
+      ],
+      "guidance": [
+        {
+          "when": {
+            "==": [
+              {
+                "var": "answers.AUTH0_SECRET"
+              },
+              "frontend"
+            ]
+          },
+          "severity": "gap",
+          "text": "**GAP.** Never expose client secrets in SPAs or native apps. Use a public application type with the Authorization Code flow plus PKCE; keep secrets in backend environment variables only."
+        },
+        {
+          "when": true,
+          "severity": "ok",
+          "text": "**Good.** Public app with PKCE, or a confidential app whose secret stays server-side. Also validate JWT signature (JWKS), issuer, audience, and expiry on every token."
+        }
+      ],
+      "cra": [
+        "2e"
+      ],
+      "stakeholders": {
+        "lead": "Cloud / IAM administrator",
+        "with": [
+          "Security architect",
+          "Developer"
+        ]
+      }
+    }
+  ],
+  "references": [
+    {
+      "label": "Brute Force Protection playbook (Auth0 docs)",
+      "url": "https://auth0.com/docs/secure/attack-protection/playbooks/brute-force-protection-playbook"
+    },
+    {
+      "label": "Comprehensive guide to Auth0 security (Auth0)",
+      "url": "https://auth0.com/blog/comprehensive-guide-auth0-security-identity-attacks/"
+    },
+    {
+      "label": "Reducing the impact of credential-stuffing attacks (Auth0)",
+      "url": "https://auth0.com/blog/reducing-the-impact-of-credential-stuffing-attacks/"
+    }
+  ]
+}
